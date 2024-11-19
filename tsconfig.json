@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "module": "commonjs",
+    "lib": ["es2016", "dom"],
+    "outDir": "./dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "types": ["node", "express"],
+    "noEmitOnError": false  // 允许在有错误的情况下生成输出文件
+  },
+  "include": ["src/**/*", "types"],
+  "exclude": ["node_modules"]
+}
