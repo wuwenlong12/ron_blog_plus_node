@@ -1,5 +1,5 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import { AddNewFolderOrArticle,    DeleteItem,    GetAllFoldersAndArticles,    UpdateFolderInfo, UpdateItemOrder,  } from '../dao/artical';
+import { AddNewFolderOrArticle,    DeleteItem,    GetFoldersAndArticles,    UpdateFolderInfo, UpdateItemOrder,  } from '../dao/artical';
 
 const router: Router = express.Router();
 
@@ -15,7 +15,7 @@ router.post('/directory', async (req: Request, res: Response, next: NextFunction
 
 router.get('/directory', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        await GetAllFoldersAndArticles(req, res);
+        await GetFoldersAndArticles(req, res);
     } catch (error) {
         next(error);
     }

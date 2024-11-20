@@ -56,6 +56,9 @@ export const AddNewFolderOrArticle = async (req: AuthenticatedRequest, res: Resp
                 return res.status(400).json({ code: 1, message: '文章内容不能为空' });
             }
 
+            if (!mongoose.Types.ObjectId.isValid(parentFolderId)) {
+                return res.status(400).json({ code: 1, message: '文件必须含有父级目录' });
+            }
             // 检查文章是否重名
             const existingArticle = await Article.findOne({ title: name, parentFolder: parentFolderId });
             if (existingArticle) {
@@ -91,8 +94,19 @@ export const AddNewFolderOrArticle = async (req: AuthenticatedRequest, res: Resp
 
 
 
-export const GetAllFoldersAndArticles = async (req: AuthenticatedRequest, res: Response) => {
+export const GetFoldersAndArticles = async (req: AuthenticatedRequest, res: Response) => {
     const Folder = db.model('Folder');
+    const  {id} = req.query
+   //如果有id则查找单个文件夹的信息，带详情
+    if (id) {
+        const item = await Folder.findById(id)
+        return  res.status(201).json({
+            code: 0,
+            message: '查找文章信息成功',
+            data: item,
+        });
+    }
+   
     const Article = db.model('Article');
     const folders: IFolder[] = await Folder.find().sort({ order: 1 }).exec()
     const articles: IArticle[] = await Article.find().sort({ order: 1 }).exec()
@@ -101,11 +115,12 @@ export const GetAllFoldersAndArticles = async (req: AuthenticatedRequest, res: R
 
     res.status(201).json({
         code: 0,
-        message: '文件夹或文章创建成功',
+        message: '查找树状目录成功',
         data: treeData,
     });
 
 };
+
 
 // 定义树节点类型
 interface TreeNode {
