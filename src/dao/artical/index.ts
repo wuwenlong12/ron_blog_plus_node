@@ -309,10 +309,15 @@ export const UpdateFolderInfo = async (
     name: newName,
     parentFolder: folderToUpdate.parentFolder,
   });
+
+
   if (existingFolder) {
-    return res
-      .status(400)
-      .json({ code: 1, message: "文件夹名称已存在，请选择其他名称" });
+    const isCurrentId = existingFolder._id.toString() === folderId
+    if (!isCurrentId) {
+      return res
+        .status(400)
+        .json({ code: 1, message: "文件夹名称已存在，请选择其他名称" });
+    }
   }
 
   // 更新文件夹名称
