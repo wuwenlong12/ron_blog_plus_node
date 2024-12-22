@@ -62,7 +62,7 @@ const FolderSchema = new mongoose.Schema<IFolder>({
 export interface IArticle {
     _id: mongoose.Types.ObjectId;  // 文章唯一ID
     title: string;  // 文章标题
-    content: string;  // 文章内容
+    content: unknown;  // 文章内容
     author: mongoose.Types.ObjectId;  // 文章作者（用户ID）
     parentFolder: { type: mongoose.Schema.Types.ObjectId, ref: 'Folder', required: true },  // 必填，所属文件夹
     order: number;  // 文章排序字段
@@ -72,7 +72,7 @@ export interface IArticle {
 
 const ArticleSchema = new mongoose.Schema<IArticle>({
     title: { type: String, required: true },  // 文章标题
-    content: { type: String, required: true },  // 文章内容
+    content: { type: Array, required: true },  // 文章内容
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },  // 文章作者（用户ID）
     parentFolder: { type: mongoose.Schema.Types.ObjectId, ref: 'Folder' },  // 文章所属文件夹
     order: { type: Number, default: 0 },  // 排序字段

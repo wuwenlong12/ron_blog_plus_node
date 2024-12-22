@@ -9,7 +9,8 @@ import uploader  from 'express-fileupload';
 // import indexRouter from './routes/index';
 import usersRouter from './routes/users';
 import uploadRouter from './routes/upload'
-import articalRouter from './routes/artical'
+import folderRouter from './routes/folder'
+import articleRouter from './routes/article'
 const app: express.Application = express();
 
 // view engine setup
@@ -55,9 +56,10 @@ app.use(
     path: [
       '/users/register', 
       '/users/login', 
-      '/artical',
-      '/artical/order',
-      /^\/artical\//, // 排除 /artical 目录下所有路由
+      '/folder',
+      '/article/content',
+      '/folder/order',
+      /^\/folder\//, // 排除 /artical 目录下所有路由
       /^\/public\//
     ],
   })
@@ -74,7 +76,8 @@ app.use(cookieParser());
 // app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/upload', uploadRouter);
-app.use('/artical', articalRouter);
+app.use('/folder', folderRouter);
+app.use('/article', articleRouter);
 // catch 404 and forward to error handler
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
   next(createError(404));
