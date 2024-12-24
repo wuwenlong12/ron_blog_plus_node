@@ -59,7 +59,7 @@ export const AddNewFolderOrArticle = async (
       return res.status(201).json({
         code: 0,
         message: "文件夹创建成功",
-        item: { ...newFolder.toObject(), type: "folder" },
+        data: { ...newFolder.toObject(), type: "folder" },
       });
     } else if (type === "article") {
       if (!mongoose.Types.ObjectId.isValid(parentFolderId)) {
@@ -113,7 +113,7 @@ export const AddNewFolderOrArticle = async (
       return res.status(201).json({
         code: 0,
         message: "文章创建成功",
-        item: { ...newArticle.toObject(), type: "article" },
+        data: { ...newArticle.toObject(), type: "article" },
       });
     } else {
       return res.status(400).json({ code: 1, message: "无效的类型" });
@@ -236,7 +236,7 @@ const buildTree = (folders: IFolder[], articles: IArticle[]): TreeNode[] => {
 export const DeleteItem = async (req: AuthenticatedRequest, res: Response) => {
   const Folder = db.model("Folder");
   const Article = db.model("Article");
-  const { itemId, type } = req.body;
+  const { itemId, type } = req.query;
 
   if (!itemId || !type) {
     return res.status(400).json({ code: 1, message: "未提供 ID 或类型" });
@@ -261,7 +261,7 @@ export const DeleteItem = async (req: AuthenticatedRequest, res: Response) => {
         await Folder.findByIdAndDelete(folderId);
       };
 
-      await deleteFolderAndChildren(itemId);
+      await deleteFolderAndChildren((itemId) as string);
 
       return res.status(200).json({
         code: 0,
@@ -369,85 +369,59 @@ export const UpdateFolderDesc = async (
 export const UpdateItemOrder = async (req: AuthenticatedRequest, res: Response) => {
   const Folder = db.model('Folder');
   const Article = db.model('Article');
-  const { itemId, type, newOrder, newParentFolderId } = req.body;
+  const { itemId, type, dropOrder, newParentFolderId } = req.body;
 
-  if (!itemId || !type || isNaN(Number(newOrder))) {
+  if (!itemId || !type || dropOrder === undefined) {
     return res.status(400).json({ code: 1, message: '缺少必要参数或参数格式错误' });
   }
 
-  const parsedOrder = Number(newOrder);
-  if (parsedOrder < 0) {
-    return res.status(400).json({ code: 1, message: '新排序值不能为负数' });
-  }
-
   try {
-    if (type === 'folder') {
-      const folderToUpdate = await Folder.findById(itemId);
-      if (!folderToUpdate) {
-        return res.status(404).json({ code: 1, message: '文件夹不存在' });
+    // 通用的更新排序逻辑
+    const updateItemOrder = async (model: any, itemId: string, newParentFolderId: string | null, dropOrder: number) => {
+      const itemToUpdate = await model.findById(itemId);
+      if (!itemToUpdate) {
+        return res.status(404).json({ code: 1, message: '项目不存在' });
       }
 
-      // 更新目标文件夹的 parentFolderId
-      folderToUpdate.parentFolder = newParentFolderId || null;
-      await folderToUpdate.save();
+      // 更新目标项目的 parentFolderId
+      itemToUpdate.parentFolder = newParentFolderId || null;
+      await itemToUpdate.save();
 
-      // 获取目标父文件夹下的所有文件夹，按 order 排序
-      const siblingFolders = await Folder.find({
+      // 获取目标父文件夹下的所有项目，按 order 排序
+      const siblingItems = await model.find({
         parentFolder: newParentFolderId || null,
       }).sort('order');
 
-      // 确保新 order 不超过范围
-      if (parsedOrder >= siblingFolders.length) {
-        return res.status(400).json({ code: 1, message: '新排序值超出范围' });
-      }
-
-      // 将当前文件夹插入新位置
-      const updatedFolders = siblingFolders.filter((folder) => folder._id.toString() !== itemId);
-      updatedFolders.splice(parsedOrder, 0, folderToUpdate);
-
-      // 更新所有文件夹的 order
-      await Promise.all(
-        updatedFolders.map((folder, index) => {
-          folder.order = index;
-          return folder.save();
-        })
+      // 找到原始数组中当前项目的索引（在删除前计算插入索引）
+      const originalIndex = siblingItems.findIndex(
+        (item: any) => item._id.toString() === itemId
       );
 
+      // 计算插入位置
+      const adjustedDropOrder =
+        dropOrder > originalIndex ? dropOrder - 1 : dropOrder;
+
+      // 将当前项目从兄弟节点中移除
+      const updatedItems = siblingItems.filter((item: any) => item._id.toString() !== itemId);
+
+      // 在指定的间隙位置插入拖动的项目
+      updatedItems.splice(adjustedDropOrder, 0, itemToUpdate);
+
+      // 更新所有项目的 order
+      await Promise.all(
+        updatedItems.map((item: any, index: number) => {
+          item.order = index; // 索引即为 order
+          return item.save();
+        })
+      );
+    };
+
+    // 根据类型调用对应的更新逻辑
+    if (type === 'folder') {
+      await updateItemOrder(Folder, itemId, newParentFolderId, dropOrder);
       return res.status(200).json({ code: 0, message: '文件夹移动并排序更新成功' });
     } else if (type === 'article') {
-      const articleToUpdate = await Article.findById(itemId);
-      if (!articleToUpdate) {
-        return res.status(404).json({ code: 1, message: '文章不存在' });
-      }
-
-      // 更新目标文章的 parentFolderId
-      articleToUpdate.parentFolder = newParentFolderId || null;
-      await articleToUpdate.save();
-
-      // 获取目标父文件夹下的所有文章，按 order 排序
-      const siblingArticles = await Article.find({
-        parentFolder: newParentFolderId || null,
-      }).sort('order');
-
-      // 确保新 order 不超过范围
-      if (parsedOrder >= siblingArticles.length) {
-        console.log(parsedOrder,siblingArticles.length);
-        
-        return res.status(400).json({ code: 1, message: '新排序值超出范围' });
-      }
-
-      // 将当前文章插入新位置
-      const updatedArticles = siblingArticles.filter((article) => article._id.toString() !== itemId);
-      updatedArticles.splice(parsedOrder, 0, articleToUpdate);
-
-      // 更新所有文章的 order
-      await Promise.all(
-        updatedArticles.map((article, index) => {
-          article.order = index;
-          return article.save();
-        })
-      );
-
+      await updateItemOrder(Article, itemId, newParentFolderId, dropOrder);
       return res.status(200).json({ code: 0, message: '文章移动并排序更新成功' });
     } else {
       return res.status(400).json({ code: 1, message: '无效的类型' });

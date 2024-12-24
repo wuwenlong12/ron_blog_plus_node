@@ -32,7 +32,7 @@ export const UpdateArticleContent = async (
 ) => {
   const Article = db.model("Article");
   const { id, content } = req.body;
-  console.log(content[0].content);
+
   
   if (!id || !content) {
     return res.status(400).json({ code: 1, message: "文章 ID 或内容不能为空" });
