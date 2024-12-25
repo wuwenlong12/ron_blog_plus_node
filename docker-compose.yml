@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - "3000:3000" # 将容器内的 3000 端口映射到主机的 3000 端口
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/ronBlog
+    volumes:
+      - .:/usr/src/app # 挂载代码目录
+    depends_on:
+      - mongo # 等待 MongoDB 启动
+
+  mongo:
+    image: mongo:latest
+    container_name: backend-mongo
+    ports:
+      - "27017:27017" # 映射 MongoDB 默认端口
+    volumes:
+      - ./data/db:/data/db # 持久化 MongoDB 数据
