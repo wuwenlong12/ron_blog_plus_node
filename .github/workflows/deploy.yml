@@ -75,7 +75,7 @@ jobs:
           echo "Uploading project to server..."
           rsync -avz --exclude=".git" --exclude="node_modules" --exclude="dist" ./ $SERVER_USER@$SERVER_HOST:$DEPLOY_DIR
 
-      # 12. 在服务器上拉取并启动 Docker 镜像。
+      # 12. 在服务器上拉取并启动 Docker 镜像。。
       - name: Pull and run Docker container on server
         env:
           SERVER_USER: ${{ secrets.SERVER_USER }}
