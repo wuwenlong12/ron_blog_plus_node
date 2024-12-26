@@ -7,8 +7,6 @@ WORKDIR /usr/src/app
 # 复制打包后的文件（从 GitHub Actions 上传的 dist/index.js）
 COPY dist/index.js ./
 
-# 复制任何其他需要的文件（如配置文件等）
-COPY .env ./
 
 # 暴露端口
 EXPOSE 3000
