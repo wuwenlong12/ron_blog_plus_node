@@ -46,7 +46,7 @@ jobs:
           git diff --exit-code Dockerfile || echo "Dockerfile has changed"
         id: dockerfile_check
 
-      # 8. 仅在 Dockerfile 有变化时构建并推送镜像
+      # 8. 仅在 Dockerfile 有变化时构建并推送镜像 。
       - name: Build Docker image
         run: docker build -t crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/ron-blog-node:latest .  
 
