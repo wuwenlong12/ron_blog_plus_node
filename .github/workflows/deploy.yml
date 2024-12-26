@@ -37,7 +37,7 @@ jobs:
       # 6. 登录到阿里云 Docker Registry
       - name: Log in to Aliyun Docker Registry
         env:
-          ALIYUN_PASSWORD: ${{ secrets.ALIYUN_PASSWORD }} # 从 GitHub Secrets 中获取部署目标目录 
+          ALIYUN_PASSWORD: ${{ secrets.ALIYUN_PASSWORD }} # 从 GitHub Secrets 中获取阿里云密码
         run: docker login --username=aliyun7228868842 --password=${{ secrets.ALIYUN_PASSWORD }} crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com # 使用阿里云账号和密码登录
 
       # 7. 构建 Docker 镜像
@@ -79,8 +79,10 @@ jobs:
         run: |
           ssh $SERVER_USER@$SERVER_HOST "bash -c '
             cd $DEPLOY_DIR &&
-            # 拉取最新的 Docker 镜像
+            # 拉取 Node.js 镜像
             docker pull crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/docker:latest &&
+            # 拉取 Mongo 镜像
+            docker pull crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/mongo:latest &&
             # 停止并删除之前的容器
             docker-compose down &&
             # 启动新服务
