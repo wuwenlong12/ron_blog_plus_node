@@ -40,13 +40,20 @@ jobs:
           ALIYUN_PASSWORD: ${{ secrets.ALIYUN_PASSWORD }} # 从 GitHub Secrets 中获取阿里云密码
         run: docker login --username=aliyun7228868842 --password=${{ secrets.ALIYUN_PASSWORD }} crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com # 使用阿里云账号和密码登录
 
-      # 7. 构建 Docker 镜像
-      - name: Build Docker image
-        run: docker build -t crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/docker:latest .  # 使用阿里云镜像仓库的地址来构建镜像
+      # 7. 检查 Dockerfile 是否有变化
+      - name: Check if Dockerfile has changed
+        run: |
+          git diff --exit-code Dockerfile || echo "Dockerfile has changed"
+        id: dockerfile_check
 
-      # 8. 推送 Docker 镜像到阿里云 Docker Registry
+      # 8. 仅在 Dockerfile 有变化时构建并推送镜像
+      - name: Build Docker image
+        if: steps.dockerfile_check.outputs.changed == 'true'
+        run: docker build -t crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/ron-blog-node:latest .  
+
       - name: Push Docker image
-        run: docker push crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/docker:latest  # 将镜像推送到阿里云 Docker Registry
+        if: steps.dockerfile_check.outputs.changed == 'true'
+        run: docker push crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/ron-blog-node:latest
 
       # 9. 设置 SSH 密钥
       - name: Set up SSH
@@ -80,7 +87,7 @@ jobs:
           ssh $SERVER_USER@$SERVER_HOST "bash -c '
             cd $DEPLOY_DIR &&
             # 拉取 Node.js 镜像
-            docker pull crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/docker:latest &&
+            docker pull crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/ron-blog-node:latest &&
             # 拉取 Mongo 镜像
             docker pull crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/mongo:latest &&
             # 停止并删除之前的容器
