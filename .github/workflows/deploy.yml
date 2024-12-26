@@ -46,15 +46,15 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts  # 获取并添加服务器公钥
 
-      # 8. 上传项目文件到服务器
+      # 8. 上传打包后的文件到服务器
       - name: Deploy to server
         env:
           SERVER_USER: ${{ secrets.SERVER_USER }} # 从 GitHub Secrets 中获取服务器用户名
           SERVER_HOST: ${{ secrets.SERVER_HOST }} # 从 GitHub Secrets 中获取服务器 IP 地址
           DEPLOY_DIR: ${{ secrets.DEPLOY_DIR }} # 从 GitHub Secrets 中获取部署目标目录
         run: |
-          echo "Uploading project to server..."
-          rsync -avz --exclude=".git" --exclude="node_modules" --exclude="dist" ./ $SERVER_USER@$SERVER_HOST:$DEPLOY_DIR
+          echo "Uploading built project to server..."
+          rsync -avz --exclude=".git" --exclude="node_modules" --exclude="src" --exclude="dist" ./dist/index.js $SERVER_USER@$SERVER_HOST:$DEPLOY_DIR
 
       # 9. 构建并运行后端服务的 Docker 容器
       - name: Build and run Docker container

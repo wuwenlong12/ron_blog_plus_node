@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "ts-node ./bin/www",
-    "dev": "nodemon -e ts --exec ts-node ./src/bin/www",
-    "build": "tsc",
+   "build": "ts-node build.ts",
+  "start": "node ./dist/bin/www.js",
+  "dev": "nodemon -e ts --exec ts-node ./src/bin/www",
     "server": "node ./dist/bin/www"
   },
   "dependencies": {
@@ -37,7 +37,8 @@
     "@types/mongoose": "^5.11.97",
     "@types/morgan": "^1.9.9",
     "@types/multer": "^1.4.12",
-    "@types/node": "^22.7.4",
+    "@types/node": "^22.10.2",
+    "esbuild": "^0.24.2",
     "eslint": "^9.11.1",
     "globals": "^15.10.0",
     "nodemon": "^3.1.7",

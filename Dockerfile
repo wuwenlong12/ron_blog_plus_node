@@ -4,20 +4,14 @@ FROM node:18
 # 设置工作目录
 WORKDIR /usr/src/app
 
-# 复制依赖配置
-COPY package*.json ./
+# 复制打包后的文件（从 GitHub Actions 上传的 dist/index.js）
+COPY dist/index.js ./
 
-# 安装依赖
-RUN npm install -g pnpm && pnpm install
-
-# 复制代码
-COPY . .
-
-# 构建 TypeScript 文件
-RUN npm run build
+# 复制任何其他需要的文件（如配置文件等）
+COPY .env ./
 
 # 暴露端口
 EXPOSE 3000
 
 # 启动服务
-CMD ["npm", "run", "server"]
+CMD ["node", "index.js"]
