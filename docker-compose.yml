@@ -1,6 +1,6 @@
 services:
   app:
-    image: crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/docker:latest  # 使用阿里云上传的 Node.js 镜像
+    image: crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/ron-blog-node:latest  # 使用阿里云上传的 Node.js 镜像
     ports:
       - "3000:3000" # 将容器内的 3000 端口映射到主机的 3000 端口
     environment:
@@ -10,7 +10,7 @@ services:
 
   mongo:
     image: crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/mongo:latest  # 使用阿里云上传的 MongoDB 镜像
-    container_name: backend-mongo
+    container_name: ron-blog-mongo
     ports:
       - "27017:27017" # 映射 MongoDB 默认端口
     volumes:
