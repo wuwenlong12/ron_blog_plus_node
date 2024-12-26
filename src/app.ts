@@ -74,10 +74,10 @@ app.use(cookieParser());
 
 
 // app.use('/', indexRouter);
-app.use('/users', usersRouter);
-app.use('/upload', uploadRouter);
-app.use('/folder', folderRouter);
-app.use('/article', articleRouter);
+app.use('/api/users', usersRouter);
+app.use('/api/upload', uploadRouter);
+app.use('/api/folder', folderRouter);
+app.use('/api/article', articleRouter);
 // catch 404 and forward to error handler
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
   next(createError(404));
