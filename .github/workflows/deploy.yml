@@ -34,7 +34,7 @@ jobs:
       - name: Build the project
         run: pnpm run build # 使用 pnpm 构建 TypeScript 项目
 
-      # 6. 登录到 Docker Hub
+      # 6. 登录到 Docker Hub .
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
