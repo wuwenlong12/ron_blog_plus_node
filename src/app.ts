@@ -56,9 +56,9 @@ app.use(
     path: [
       '/users/register', 
       '/users/login', 
-      '/folder',
-      '/article/content',
-      '/folder/order',
+      '/api/folder',
+      '/api/article/content',
+      '/api/folder/order',
       /^\/folder\//, // 排除 /artical 目录下所有路由
       /^\/public\//
     ],
