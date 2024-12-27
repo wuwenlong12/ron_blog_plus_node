@@ -12,19 +12,48 @@ export const GetArticleInfo = async (
   // 查找单个文章的信息
   const Article = db.model("Article");
   if (id) {
-    const item = await Article.findById(id);
-    console.log("序列化前的数据：", item.content[0].content);
+    const item = await Article.findById(id).lean()
+    console.log(item);
+    
+    // console.log("序列化前的数据：", item.content[0].content);
+  const data = JSON.parse(customStringify(item)) 
+    
     
     // 发送已处理的完整数据，避免 Express 重新序列化
-    return res.status(200).json({
-      test:item.content[0].content,
+    return res.status(200).send({
+      // test:item.content[0].content,
       code: 0,
       message: "查找文章内容成功",
-      data: item
+      data
     });
   }
 };
 
+function customStringify(obj) {
+  // 递归处理函数
+  function replaceUndefined(value) {
+    if (Array.isArray(value)) {
+      return value.map(replaceUndefined);
+    } else if (value !== null && typeof value === "object") {
+      // 如果对象有 _id 字段，转换为字符串
+      if (value._id) {
+        value = { ...value, _id: value._id.toString() }; // 创建一个新对象，转换 _id
+      }
+      
+      // 遍历对象的所有键值对
+      return Object.fromEntries(
+        Object.entries(value).map(([key, val]) => {
+          // 处理 undefined 为 null
+          return [key, val === undefined ? null : replaceUndefined(val)];
+        })
+      );
+    }
+    return value;
+  }
+
+  // 替换 undefined 为 null，并返回 JSON 字符串
+  return JSON.stringify(replaceUndefined(obj));
+}
 // 更新文章内容接口
 export const UpdateArticleContent = async (
   req: AuthenticatedRequest,

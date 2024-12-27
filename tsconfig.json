@@ -1,15 +1,14 @@
 {
   "compilerOptions": {
-    "target": "es2016",
-    "module": "commonjs",
-    "lib": ["es2016", "dom"],
-    "outDir": "./dist",
-    "strict": true,
-    "noImplicitAny": false, // 单独允许 any
-    "esModuleInterop": true,
-    "types": ["node", "express"],
-    "noEmitOnError": false
+    "target": "es2016",          // 可以指定目标版本，esbuild 会根据此进行转换
+    "strict": true,              // 开启严格类型检查
+    "moduleResolution": "node",  // 或者 "nodenext"
+    "noImplicitAny": false,      // 允许 any 类型
+    "esModuleInterop": true,     // 开启模块互操作性
+    "types": ["node", "express"] // 保留对 Node 和 Express 类型的支持
   },
   "include": ["src/**/*", "types"],
   "exclude": ["node_modules"]
 }
+
+// TypeScript 的模块解析可以使用不同的策略。默认情况下，它使用 classic 解析策略，但如果你在使用 Node.js 或现代的 ESM 模块，可能需要设置 moduleResolution 为 node 或 nodenext。这会帮助 TypeScript 正确解析 node_modules 中的模块。

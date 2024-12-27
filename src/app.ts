@@ -11,11 +11,13 @@ import usersRouter from './routes/users';
 import uploadRouter from './routes/upload'
 import folderRouter from './routes/folder'
 import articleRouter from './routes/article'
+import dotenv from 'dotenv';
 const app: express.Application = express();
-
+// 加载 .env 文件
+dotenv.config();
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+app.set('view engine', 'pug');
 
 // 设置跨域访问
 app.all('*', (req: express.Request, res: express.Response, next: express.NextFunction) => {
