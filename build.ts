@@ -1,4 +1,10 @@
 import { build } from 'esbuild';
+// 获取当前的环境变量
+const defineEnv = Object.keys(process.env).reduce((acc, key) => {
+  // 用反引号确保将每个环境变量替换为字符串值
+  acc[`process.env.${key}`] = `"${process.env[key]}"`;
+  return acc;
+}, {});
 
 async function runBuild() {
   try {
@@ -10,6 +16,10 @@ async function runBuild() {
       target: 'node18', // 目标 Node.js 版本
       minify: true, // 压缩输出的代码
       sourcemap: false, // 不生成 SourceMap
+      define: {
+        // 动态传递所有环境变量
+        ...defineEnv,
+      },
     });
     console.log('Build completed successfully!');
   } catch (error) {

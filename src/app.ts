@@ -12,12 +12,9 @@ import uploadRouter from './routes/upload'
 import folderRouter from './routes/folder'
 import articleRouter from './routes/article'
 import tagRouter from './routes/tag'
-import 'dotenv-flow/config';
+
 
 const app: express.Application = express();
-
-
-console.log('MONGO_URL:', process.env.MONGO_URL); 
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
