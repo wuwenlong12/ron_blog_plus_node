@@ -1,10 +1,12 @@
 import { build } from 'esbuild';
+import 'dotenv-flow/config';
 // 获取当前的环境变量
 const defineEnv = Object.keys(process.env).reduce((acc, key) => {
   // 用反引号确保将每个环境变量替换为字符串值
   acc[`process.env.${key}`] = `"${process.env[key]}"`;
   return acc;
 }, {});
+console.log(defineEnv);
 
 async function runBuild() {
   try {
