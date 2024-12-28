@@ -12,7 +12,7 @@ export const GetArticleInfo = async (
   // 查找单个文章的信息
   const Article = db.model("Article");
   if (id) {
-    const item = await Article.findById(id).lean()
+    const item = await Article.findById(id).populate('tags', 'name color').lean()
     console.log(item);
     
     // console.log("序列化前的数据：", item.content[0].content);
@@ -38,6 +38,9 @@ function customStringify(obj) {
       // 如果对象有 _id 字段，转换为字符串
       if (value._id) {
         value = { ...value, _id: value._id.toString() }; // 创建一个新对象，转换 _id
+      }
+      if (value.parentFolder) {
+        value = { ...value, parentFolder: value.parentFolder.toString() }; // 创建一个新对象，转换 _id
       }
       
       // 遍历对象的所有键值对
@@ -69,7 +72,6 @@ export const UpdateArticleContent = async (
 
   // 查找文章
   const article = await Article.findOne({ _id: id});
-console.log();
 
   if (!article) {
     return res.status(404).json({ code: 1, message: "文章不存在" });

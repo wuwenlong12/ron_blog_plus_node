@@ -66,6 +66,7 @@ export interface IArticle {
     content: unknown;  // 文章内容
     author: mongoose.Types.ObjectId;  // 文章作者（用户ID）
     parentFolder: { type: mongoose.Schema.Types.ObjectId, ref: 'Folder', required: true },  // 必填，所属文件夹
+    tags: mongoose.Types.ObjectId[]; // 新增字段，存储关联的标签 ID
     order: number;  // 文章排序字段
     createdAt?: Date;  // 创建时间
     updatedAt?: Date;  // 更新时间
@@ -76,14 +77,28 @@ const ArticleSchema = new mongoose.Schema<IArticle>({
     content: { type: Array, required: true },  // 文章内容
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },  // 文章作者（用户ID）
     parentFolder: { type: mongoose.Schema.Types.ObjectId, ref: 'Folder' },  // 文章所属文件夹
+    tags: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tag", default: [] }], // 默认空数组
     order: { type: Number, default: 0 },  // 排序字段
 }, { timestamps: true });
 
+// 标签表接口和 Schema
+export interface ITag {
+    _id: mongoose.Types.ObjectId;  // 标签唯一ID
+    name: string;  // 标签名称
+    color:string;
+    createdAt?: Date;  // 创建时间
+    updatedAt?: Date;  // 更新时间
+}
 
+const TagSchema = new mongoose.Schema<ITag>({
+    name: { type: String, unique: true, required: true },  // 标签名称（唯一且必填）
+    color:{ type: String, required: false },
+}, { timestamps: true });  // 自动添加 createdAt 和 updatedAt 字段
 // 创建模型
 const User = db.model<IUser>('User', UserSchema);
 const Folder = db.model<IFolder>('Folder', FolderSchema);
 const Article = db.model<IArticle>('Article', ArticleSchema);
+const Tag = db.model<ITag>('Tag', TagSchema);
 
-export { User, Folder, Article };
+export { User, Folder, Article,Tag };
 export default db;

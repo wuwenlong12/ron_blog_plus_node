@@ -11,7 +11,7 @@ export const AddNewFolderOrArticle = async (
 ) => {
   const Folder = db.model<IFolder>("Folder");
   const Article = db.model<IArticle>("Article");
-  const { name, parentFolderId, type } = req.body;
+  const { name, parentFolderId, type ,tags} = req.body;
 
   if (!name || name.trim() === "") {
     return res.status(400).json({ code: 1, message: "名称不能为空" });
@@ -81,10 +81,31 @@ export const AddNewFolderOrArticle = async (
         { parentFolder: parentFolderId || null },
         { $inc: { order: 1 } }
       );
+      const Tag = db.model("Tag");
+      const tagIds: mongoose.Types.ObjectId[] = [];
+      if (tags && tags.length > 0) {
+        // 遍历 tags 数组，检查并存储标签
+        for (const tag of tags) {
+          const existingTag = await Tag.findOne({ name: tag.name });
 
+          if (!existingTag) {
+            // 如果标签不存在，创建新的标签
+            const newTag = new Tag({
+              name: tag.name,
+              color: tag.color,
+            });
+            await newTag.save();
+            tagIds.push(newTag._id);
+          } else {
+            // 如果标签已存在，直接使用该标签的 ID
+            tagIds.push(existingTag._id);
+          }
+        }
+      }
       // 创建文章
       const newArticle = new Article({
         title: name,
+        tags:tagIds,
         content:[{
           id: "b7e79971-43cb-42d7-886c-5598f5c911fa",
           type: "paragraph",

@@ -11,6 +11,7 @@ import usersRouter from './routes/users';
 import uploadRouter from './routes/upload'
 import folderRouter from './routes/folder'
 import articleRouter from './routes/article'
+import tagRouter from './routes/tag'
 import dotenv from 'dotenv';
 const app: express.Application = express();
 // 加载 .env 文件
@@ -61,6 +62,7 @@ app.use(
       '/api/folder',
       '/api/article/content',
       '/api/folder/order',
+      '/api/tag',
       /^\/folder\//, // 排除 /artical 目录下所有路由
       /^\/public\//
     ],
@@ -80,6 +82,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/folder', folderRouter);
 app.use('/api/article', articleRouter);
+app.use('/api/tag', tagRouter);
 // catch 404 and forward to error handler
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
   next(createError(404));
