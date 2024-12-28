@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
-
+import 'dotenv-flow/config';
 // 创建数据库连接
 // const db = mongoose.createConnection('mongodb://mongo:27017/ronBlog', {});
-const db = mongoose.createConnection(process.env.MONGO_URL || 'mongodb://localhost:27017/ronBlog', {});
+const db = mongoose.createConnection((process.env.MONGO_URL) as string);
 
 db.on('error', console.error.bind(console, '连接错误:'));
 db.once('open', () => {
