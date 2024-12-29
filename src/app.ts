@@ -60,6 +60,7 @@ app.use(
       '/users/register', 
       '/users/login', 
       '/api/folder',
+      '/api/article',
       '/api/article/content',
       '/api/folder/order',
       '/api/tag',

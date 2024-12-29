@@ -1,7 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "./type";
-import db, { IArticle} from "../../model";
-
+import db, { IArticle } from "../../model";
 
 export const GetArticleInfo = async (
   req: AuthenticatedRequest,
@@ -12,41 +11,36 @@ export const GetArticleInfo = async (
   // 查找单个文章的信息
   const Article = db.model("Article");
   if (id) {
-    const item = await Article.findById(id).populate('tags', 'name color').lean()
-    console.log(item);
-    
-    // console.log("序列化前的数据：", item.content[0].content);
-  const data = JSON.parse(customStringify(item)) 
-    
-    
-    // 发送已处理的完整数据，避免 Express 重新序列化
+    const item = await Article.findById(id)
+      .populate("tags", "name color")
+      .lean();
+      console.log(JSON.stringify(item));
+      
+    const data = JSON.parse(customStringify(item));
+    console.log(JSON.stringify(data));
     return res.status(200).send({
-      // test:item.content[0].content,
       code: 0,
       message: "查找文章内容成功",
-      data
+      data,
     });
   }
 };
 
 function customStringify(obj) {
-  // 递归处理函数
   function replaceUndefined(value) {
     if (Array.isArray(value)) {
       return value.map(replaceUndefined);
+    } else if (value instanceof Date) {
+      // 如果是 Date 类型，转换为 ISO 字符串
+      return value.toISOString();
     } else if (value !== null && typeof value === "object") {
-      // 如果对象有 _id 字段，转换为字符串
-      if (value._id) {
-        value = { ...value, _id: value._id.toString() }; // 创建一个新对象，转换 _id
-      }
-      if (value.parentFolder) {
-        value = { ...value, parentFolder: value.parentFolder.toString() }; // 创建一个新对象，转换 _id
-      }
-      
-      // 遍历对象的所有键值对
       return Object.fromEntries(
         Object.entries(value).map(([key, val]) => {
-          // 处理 undefined 为 null
+          if (key === "_id" || key === "parentFolder") {
+            // 对 _id 和 parentFolder 转换为字符串
+            return [key, val ? val.toString() : val];
+          }
+          // 保留其他字段，处理 undefined 为 null
           return [key, val === undefined ? null : replaceUndefined(val)];
         })
       );
@@ -54,7 +48,6 @@ function customStringify(obj) {
     return value;
   }
 
-  // 替换 undefined 为 null，并返回 JSON 字符串
   return JSON.stringify(replaceUndefined(obj));
 }
 // 更新文章内容接口
@@ -65,13 +58,12 @@ export const UpdateArticleContent = async (
   const Article = db.model("Article");
   const { id, content } = req.body;
 
-  
   if (!id || !content) {
     return res.status(400).json({ code: 1, message: "文章 ID 或内容不能为空" });
   }
 
   // 查找文章
-  const article = await Article.findOne({ _id: id});
+  const article = await Article.findOne({ _id: id });
 
   if (!article) {
     return res.status(404).json({ code: 1, message: "文章不存在" });
@@ -88,3 +80,34 @@ export const UpdateArticleContent = async (
   });
 };
 
+export const GetAllArticlesInfo = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const Article = db.model("Article");
+
+  // 获取所有文章的标题和更新时间，按更新时间降序排序
+  const articles = await Article.find({}, "title updatedAt")
+    .sort({ updatedAt: -1 }) // 按更新时间降序排序
+    .lean();
+
+  // 按年份分类
+  const articlesByYear = articles.reduce((acc: Record<string, any[]>, article) => {
+    const year = new Date(article.updatedAt).getFullYear().toString();
+    if (!acc[year]) {
+      acc[year] = [];
+    }
+    acc[year].push({
+      _id:article._id,
+      title: article.title,
+      updatedAt: article.updatedAt,
+    });
+    return acc;
+  }, {});
+
+  res.status(200).json({
+    code: 0,
+    message: "按年份分类获取文章成功",
+    data: articlesByYear,
+  });
+};
