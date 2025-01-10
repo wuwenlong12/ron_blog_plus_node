@@ -1,11 +1,19 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import { GetAllArticlesInfo, GetArticleInfo } from '../dao/article';
+import { GetAllArticlesInfo, GetArticleInfo, GetPaginatedArticles } from '../dao/article';
 import { UpdateArticleContent } from '../dao/article';
 
 const router: Router = express.Router();
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
         await GetAllArticlesInfo(req, res);
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.get('/summary', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await GetPaginatedArticles(req, res);
     } catch (error) {
         next(error);
     }

@@ -10,12 +10,12 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response) => {
   const { name, size, type, offset, hash } = req.body;
 
   if (!name || !size || !type) {
-    return res.status(400).send({ code: 0, message: '文件上传需要 name, size, type 参数' });
+    return res.status(400).send({ code: 1, message: '文件上传需要 name, size, type 参数' });
   }
 console.log(req.files);
 
   if (!req.files || !req.files.file) {
-    return res.status(400).send({ code: 0, message: '文件未上传' });
+    return res.status(400).send({ code: 1, message: '文件未上传' });
   }
 
   const { file } = req.files;
@@ -36,14 +36,14 @@ console.log(req.files);
           return res.status(404).send({ code: 0, message: '文件不存在' });
         }
         await appendFile(filename, uploadedFile.data);
-        return res.send({ code: 1, data: 'appended', fileUrl }); // 返回 URL
+        return res.send({ code: 0, data: 'appended', fileUrl }); // 返回 URL
       } else {
         await writeFile(filename, uploadedFile.data);
-        return res.send({ code: 1, data: 'uploaded', fileUrl }); // 返回 URL
+        return res.send({ code: 0, data: 'uploaded', fileUrl }); // 返回 URL
       }
     }
   } catch (error) {
     console.error('文件处理错误:', error);
-    return res.status(500).send({ code: 0, message: '文件处理失败' });
+    return res.status(500).send({ code: 1, message: '文件处理失败' });
   }
 };

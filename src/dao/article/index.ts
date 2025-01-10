@@ -111,3 +111,47 @@ export const GetAllArticlesInfo = async (
     data: articlesByYear,
   });
 };
+
+// 分页获取文章接口
+export const GetPaginatedArticles = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const Article = db.model("Article");
+
+  // 获取分页参数
+  const pageNumber = parseInt(req.query.pageNumber as string) || 1;
+  const limitNumber = parseInt(req.query.limitNumber as string) || 10;
+
+  // 查询文章并处理数据
+  const articles: IArticle[] = await Article.find({}, "title summary createdAt updatedAt tags content")
+    .populate("tags", "name color")
+    .sort({ createdAt: -1 })
+    .skip((pageNumber - 1) * limitNumber)
+    .limit(limitNumber)
+    .lean<IArticle[]>();
+
+  const totalArticles = await Article.countDocuments();
+
+  const formattedArticles = articles.map((article) => ({
+    id: article._id.toString(), // 将 ObjectId 转为字符串
+    title: article.title,
+    summary: article.content.slice(0,2),
+    createdAt: article.createdAt,
+    updatedAt: article.updatedAt,
+    tags: article.tags,
+  }));
+
+  res.status(200).json({
+    code: 0,
+    message: "获取分页文章成功",
+    data: {
+      articles: formattedArticles,
+      pagination: {
+        currentPage: pageNumber,
+        pageSize: limitNumber,
+        total: totalArticles,
+      },
+    },
+  });
+};

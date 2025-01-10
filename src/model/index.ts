@@ -64,7 +64,7 @@ const FolderSchema = new mongoose.Schema<IFolder>({
 export interface IArticle {
     _id: mongoose.Types.ObjectId;  // 文章唯一ID
     title: string;  // 文章标题
-    content: unknown;  // 文章内容
+    content: Array<unknown>;  // 文章内容
     author: mongoose.Types.ObjectId;  // 文章作者（用户ID）
     parentFolder: { type: mongoose.Schema.Types.ObjectId, ref: 'Folder', required: true },  // 必填，所属文件夹
     tags: mongoose.Types.ObjectId[]; // 新增字段，存储关联的标签 ID
