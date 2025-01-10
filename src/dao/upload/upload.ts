@@ -4,7 +4,7 @@ import { extname, resolve } from 'path';
 import { promises as fsPromises } from 'fs';
 import { existsSync } from 'fs';
 
-const { writeFile, appendFile } = fsPromises;
+const { writeFile, appendFile ,mkdir} = fsPromises;
 
 export const uploadFile = async (req: AuthenticatedRequest, res: Response) => {
   const { name, size, type, offset, hash } = req.body;
@@ -23,12 +23,17 @@ console.log(req.files);
   
   const ext = extname(name);
   
-  const filename = resolve(__dirname, `../../../public/${hash || name}${ext}`);
-  const fileUrl = `${req.protocol}://${req.get('host')}/static/${hash || name}${ext}`; // 构建文件 URL
+  const publicDir = resolve(__dirname, "../../../public");
+  const filename = resolve(publicDir, `${hash || name}${ext}`);
+  const fileUrl = `${req.protocol}://${req.get("host")}/static/${
+    hash || name
+  }${ext}`; // 构建文件 URL
 
   try {
     const uploadedFile = Array.isArray(file) ? file[0] : file;
-
+    if (!existsSync(publicDir)) {
+      await mkdir(publicDir, { recursive: true });
+    }
     // 如果是大文件上传（包含分片），需要 hash 和 offset 参数
     if (hash && offset !== undefined) {
       if (offset > 0) {
