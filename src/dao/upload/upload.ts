@@ -25,7 +25,7 @@ console.log(req.files);
   
   const publicDir = resolve(__dirname, "../../../public");
   const filename = resolve(publicDir, `${hash || name}${ext}`);
-  const fileUrl = `${req.protocol}://${req.get("host")}/static/${
+  const fileUrl = `${req.protocol}://${req.get("host")}/public/${
     hash || name
   }${ext}`; // 构建文件 URL
 
