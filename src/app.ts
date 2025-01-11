@@ -44,7 +44,7 @@ app.all('*', (req: express.Request, res: express.Response, next: express.NextFun
 });
 const publicPath = path.resolve(__dirname, '../public');
 
-app.use('/static', express.static(publicPath))
+app.use('/public', express.static(publicPath))
 
 
 

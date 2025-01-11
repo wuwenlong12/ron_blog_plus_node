@@ -12,18 +12,20 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response) => {
   if (!name || !size || !type) {
     return res.status(400).send({ code: 1, message: '文件上传需要 name, size, type 参数' });
   }
-console.log(req.files);
+
 
   if (!req.files || !req.files.file) {
     return res.status(400).send({ code: 1, message: '文件未上传' });
   }
 
   const { file } = req.files;
-  console.log(file);
+
   
   const ext = extname(name);
   
-  const publicDir = resolve(__dirname, "../../../public");
+  const publicDir = resolve(process.cwd(), "public");
+  console.log(publicDir);
+  
   const filename = resolve(publicDir, `${hash || name}${ext}`);
   const fileUrl = `${req.protocol}://${req.get("host")}/public/${
     hash || name
