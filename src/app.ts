@@ -1,6 +1,6 @@
 import createError from 'http-errors';
 import express from 'express';
-import path from 'path';
+import path, { resolve } from 'path';
 import  cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import cors from 'cors';
@@ -42,7 +42,7 @@ app.all('*', (req: express.Request, res: express.Response, next: express.NextFun
     next();
   }
 });
-const publicPath = path.resolve(__dirname, '../public');
+const publicPath = resolve(process.cwd(), "public");
 
 app.use('/api/public', express.static(publicPath))
 
