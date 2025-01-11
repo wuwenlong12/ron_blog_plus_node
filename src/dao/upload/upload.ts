@@ -27,9 +27,10 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response) => {
   console.log(publicDir);
   
   const filename = resolve(publicDir, `${hash || name}${ext}`);
-  const fileUrl = `${req.protocol}://${req.get("host")}/public/${
+  const fileUrl = `${req.protocol}://${req.get("host")}/api/public/${
     hash || name
   }${ext}`; // 构建文件 URL
+console.log(fileUrl);
 
   try {
     const uploadedFile = Array.isArray(file) ? file[0] : file;

@@ -44,7 +44,7 @@ app.all('*', (req: express.Request, res: express.Response, next: express.NextFun
 });
 const publicPath = path.resolve(__dirname, '../public');
 
-app.use('/public', express.static(publicPath))
+app.use('/api/public', express.static(publicPath))
 
 
 
@@ -67,7 +67,7 @@ app.use(
       '/api/folder/order',
       '/api/tag',
       /^\/folder\//, // 排除 /artical 目录下所有路由
-      /^\/public\//
+      /^\/api\/public\//, // 排除 /api/public 目录下所有路由
     ],
   })
 );
