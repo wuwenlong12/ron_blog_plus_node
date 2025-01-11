@@ -5,6 +5,11 @@ services:
       - "3000:3000" # 将容器内的 3000 端口映射到主机的 3000 端口
     volumes:
       - /var/docker/public:/app/public
+    command: >
+      sh -c "
+      [ ! -d /app/public ] && cp -r /app/public/* /var/docker/public || true &&
+      node index.js
+      "
     environment:
       - MONGO_URI=mongodb://mongo:27017/ronBlog # MongoDB 地址
     depends_on:
