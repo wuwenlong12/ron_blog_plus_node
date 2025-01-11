@@ -43,6 +43,8 @@ app.all('*', (req: express.Request, res: express.Response, next: express.NextFun
   }
 });
 const publicPath = resolve(process.cwd(), "public");
+console.log("publicPath"+publicPath);
+
 
 app.use('/api/public', express.static(publicPath))
 
