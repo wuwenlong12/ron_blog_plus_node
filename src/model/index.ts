@@ -65,6 +65,7 @@ export interface IArticle {
     _id: mongoose.Types.ObjectId;  // 文章唯一ID
     title: string;  // 文章标题
     content: Array<unknown>;  // 文章内容
+    summary: Array<unknown>;  // 文章内容
     author: mongoose.Types.ObjectId;  // 文章作者（用户ID）
     parentFolder: { type: mongoose.Schema.Types.ObjectId, ref: 'Folder', required: true },  // 必填，所属文件夹
     tags: mongoose.Types.ObjectId[]; // 新增字段，存储关联的标签 ID
@@ -76,11 +77,12 @@ export interface IArticle {
 const ArticleSchema = new mongoose.Schema<IArticle>({
     title: { type: String, required: true },  // 文章标题
     content: { type: Array, required: true },  // 文章内容
+    summary:{ type: Array, required: true },
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },  // 文章作者（用户ID）
     parentFolder: { type: mongoose.Schema.Types.ObjectId, ref: 'Folder' },  // 文章所属文件夹
     tags: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tag", default: [] }], // 默认空数组
     order: { type: Number, default: 0 },  // 排序字段
-}, { timestamps: true });
+}, { timestamps: true,minimize: false });
 
 // 标签表接口和 Schema
 export interface ITag {
@@ -95,11 +97,37 @@ const TagSchema = new mongoose.Schema<ITag>({
     name: { type: String, unique: true, required: true },  // 标签名称（唯一且必填）
     color:{ type: String, required: false },
 }, { timestamps: true });  // 自动添加 createdAt 和 updatedAt 字段
+
+
+export interface IDiary {
+    _id: mongoose.Types.ObjectId; // 日记唯一ID
+    title: string; // 日记标题
+    content: Array<unknown>; // 日记内容
+    tags: mongoose.Types.ObjectId[]; // 新增字段，存储关联的标签 ID
+    summary: Array<unknown>;  // 文章内容
+    coverImage?: string; // 主图URL
+    // author: mongoose.Types.ObjectId; // 日记作者（用户ID）
+    // isPublic: boolean; // 是否公开
+    createdAt?: Date; // 创建时间
+    updatedAt?: Date; // 更新时间
+}
+
+const DiarySchema = new mongoose.Schema<IDiary>({
+    title: { type: String, required: true }, // 日记标题，必填
+    tags: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tag", default: [] }], // 默认空数组
+    content: { type: Array, required: true }, // 日记内容，必填
+    summary:{ type: Array, required: true },
+    coverImage: { type: String, required: false}, // 主图URL，必填
+    // author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // 日记作者
+    // isPublic: { type: Boolean, default: false }, // 是否公开，默认私密
+}, { timestamps: true,minimize: false  }); // 自动生成 createdAt 和 updatedAt 字段
+
 // 创建模型
 const User = db.model<IUser>('User', UserSchema);
 const Folder = db.model<IFolder>('Folder', FolderSchema);
 const Article = db.model<IArticle>('Article', ArticleSchema);
 const Tag = db.model<ITag>('Tag', TagSchema);
+const Diary = db.model<IDiary>('Diary', DiarySchema);
 
-export { User, Folder, Article,Tag };
+export { User, Folder, Article,Tag,Diary };
 export default db;

@@ -12,6 +12,7 @@ import uploadRouter from './routes/upload'
 import folderRouter from './routes/folder'
 import articleRouter from './routes/article'
 import tagRouter from './routes/tag'
+import diaryRouter from './routes/diary'
 
 
 const app: express.Application = express();
@@ -68,6 +69,8 @@ app.use(
       '/api/article/content',
       '/api/folder/order',
       '/api/tag',
+      '/api/diary',
+      '/api/diary/content',
       /^\/folder\//, // 排除 /artical 目录下所有路由
       /^\/api\/public\//, // 排除 /api/public 目录下所有路由
     ],
@@ -88,6 +91,7 @@ app.use('/api/upload', uploadRouter);
 app.use('/api/folder', folderRouter);
 app.use('/api/article', articleRouter);
 app.use('/api/tag', tagRouter);
+app.use('/api/diary', diaryRouter);
 // catch 404 and forward to error handler
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
   next(createError(404));

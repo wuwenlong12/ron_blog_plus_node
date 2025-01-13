@@ -2,6 +2,7 @@ import { Response } from "express";
 import { AuthenticatedRequest } from "./type";
 import db, { IArticle } from "../../model";
 
+
 export const GetArticleInfo = async (
   req: AuthenticatedRequest,
   res: Response
@@ -11,13 +12,10 @@ export const GetArticleInfo = async (
   // 查找单个文章的信息
   const Article = db.model("Article");
   if (id) {
-    const item = await Article.findById(id)
+    const data = await Article.findById(id)
       .populate("tags", "name color")
       .lean();
-      console.log(JSON.stringify(item));
-      
-    const data = JSON.parse(customStringify(item));
-    console.log(JSON.stringify(data));
+
     return res.status(200).send({
       code: 0,
       message: "查找文章内容成功",
@@ -26,30 +24,7 @@ export const GetArticleInfo = async (
   }
 };
 
-function customStringify(obj) {
-  function replaceUndefined(value) {
-    if (Array.isArray(value)) {
-      return value.map(replaceUndefined);
-    } else if (value instanceof Date) {
-      // 如果是 Date 类型，转换为 ISO 字符串
-      return value.toISOString();
-    } else if (value !== null && typeof value === "object") {
-      return Object.fromEntries(
-        Object.entries(value).map(([key, val]) => {
-          if (key === "_id" || key === "parentFolder") {
-            // 对 _id 和 parentFolder 转换为字符串
-            return [key, val ? val.toString() : val];
-          }
-          // 保留其他字段，处理 undefined 为 null
-          return [key, val === undefined ? null : replaceUndefined(val)];
-        })
-      );
-    }
-    return value;
-  }
 
-  return JSON.stringify(replaceUndefined(obj));
-}
 // 更新文章内容接口
 export const UpdateArticleContent = async (
   req: AuthenticatedRequest,
@@ -71,6 +46,10 @@ export const UpdateArticleContent = async (
 
   // 更新文章内容
   article.content = content;
+  //展示首页的内容
+  article.summary = content.length >3?content.slice(0,3):content.slice(0,-1)
+  console.log(article.summary);
+  
   await article.save();
 
   res.status(200).json({
@@ -133,20 +112,13 @@ export const GetPaginatedArticles = async (
 
   const totalArticles = await Article.countDocuments();
 
-  const formattedArticles = articles.map((article) => ({
-    id: article._id.toString(), // 将 ObjectId 转为字符串
-    title: article.title,
-    summary: article.content.slice(0,2),
-    createdAt: article.createdAt,
-    updatedAt: article.updatedAt,
-    tags: article.tags,
-  }));
+ 
 
   res.status(200).json({
     code: 0,
     message: "获取分页文章成功",
     data: {
-      articles: formattedArticles,
+      articles: articles,
       pagination: {
         currentPage: pageNumber,
         pageSize: limitNumber,
