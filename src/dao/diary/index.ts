@@ -222,3 +222,22 @@ export const UpdateDiary = async (req: AuthenticatedRequest, res: Response) => {
     data: diary,
   });
 };
+
+export const GetAllDiaryDates = async (req: AuthenticatedRequest, res: Response) => {
+  const Diary = db.model("Diary");
+
+  const diaryDates = await Diary.find({}, "createdAt")
+    .sort({ createdAt: -1 }) // 按创建时间倒序排列
+    .lean();
+
+  // 提取日期并去重
+  const uniqueDates = [
+    ...new Set(diaryDates.map(diary => new Date(diary.createdAt).toISOString().split("T")[0]))
+  ];
+
+  res.status(200).json({
+    code: 0,
+    message: "获取所有日记日期成功",
+    data: uniqueDates,
+  });
+};

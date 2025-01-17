@@ -1,5 +1,5 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import { AddDiary, GetAllDiaries, GetDiaryById, UpdateDiary } from '../dao/diary';
+import { AddDiary, GetAllDiaries, GetAllDiaryDates, GetDiaryById, UpdateDiary } from '../dao/diary';
 
 const router: Router = express.Router();
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -21,6 +21,14 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 router.get('/content', async (req: Request, res: Response, next: NextFunction) => {
     try {
         await GetDiaryById(req, res);
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.get('/date', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await GetAllDiaryDates(req, res);
     } catch (error) {
         next(error);
     }
