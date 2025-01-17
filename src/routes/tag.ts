@@ -1,5 +1,5 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import { AddNewTag, DeleteTag, GetAllTags } from '../dao/tag';
+import { AddNewTag, DeleteTag, GetAllTags } from '../controllers/tag';
 
 const router: Router = express.Router();
 

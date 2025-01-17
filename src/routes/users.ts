@@ -1,5 +1,5 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import { register, repeat, login, userDetial } from '../dao/user/user';
+import { register, repeat, login, userDetial } from '../controllers/user/user';
 
 const router: Router = express.Router();
 

@@ -1,5 +1,5 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import { AddNewFolderOrArticle,    DeleteItem,    GetFoldersOrItemInfo,    UpdateFolderDesc,    UpdateFolderName, UpdateItemOrder,  } from '../dao/folder';
+import { AddNewFolderOrArticle,    DeleteItem,    GetFoldersOrItemInfo,    UpdateFolderDesc,    UpdateFolderName, UpdateItemOrder,  } from '../controllers/folder';
 
 const router: Router = express.Router();
 

@@ -1,6 +1,6 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import { GetAllArticlesInfo, GetArticleInfo, GetPaginatedArticles } from '../dao/article';
-import { UpdateArticleContent } from '../dao/article';
+import { GetAllArticlesInfo, GetArticleInfo, GetPaginatedArticles } from '../controllers/article';
+import { UpdateArticleContent } from '../controllers/article';
 
 const router: Router = express.Router();
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {

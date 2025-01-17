@@ -1,5 +1,5 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import { AddDiary, GetAllDiaries, GetAllDiaryDates, GetDiaryById, UpdateDiary } from '../dao/diary';
+import { AddDiary, GetAllDiaries, GetAllDiaryDates, GetDiaryById, UpdateDiary } from '../controllers/diary';
 
 const router: Router = express.Router();
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {

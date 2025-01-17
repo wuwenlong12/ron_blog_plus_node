@@ -1,6 +1,6 @@
 import express, { NextFunction, Request, Response } from 'express';
 
-import { uploadFile } from '../dao/upload/upload';
+import { uploadFile } from '../controllers/upload/upload';
 
 
 const router = express.Router();
