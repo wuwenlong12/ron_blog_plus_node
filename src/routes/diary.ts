@@ -1,5 +1,5 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import { AddDiary, GetAllDiaries, GetAllDiaryDates, GetDiaryById, UpdateDiary } from '../controllers/diary';
+import { AddDiary, GetAllDiaries, GetAllDiaryDates, GetDiariesByDate, GetDiaryById, GetDiaryTimeline, UpdateDiary } from '../controllers/diary';
 
 const router: Router = express.Router();
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -10,7 +10,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     }
 });
 
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/list', async (req: Request, res: Response, next: NextFunction) => {
     try {
         await GetAllDiaries(req, res);
     } catch (error) {
@@ -42,8 +42,21 @@ router.put('/', async (req: Request, res: Response, next: NextFunction) => {
     }
 });
 
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await GetDiariesByDate(req, res);
+    } catch (error) {
+        next(error);
+    }
+});
 
-
+router.get('/timeline', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await GetDiaryTimeline(req, res);
+    } catch (error) {
+        next(error);
+    }
+});
 
 
 

@@ -1,21 +1,84 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "./type";
 import db, { Tag } from "../../model";
-import mongoose, { ObjectId } from "mongoose";
-
-
+import mongoose from "mongoose";
+import dayjs from "dayjs";
+import utc from 'dayjs/plugin/utc';
+import { create } from "node:domain";
+dayjs.extend(utc);
 export const AddDiary = async (req: AuthenticatedRequest, res: Response) => {
   const Diary = db.model("Diary");
 
   // 从请求体中获取字段
   // const { title, content, coverImage, tags, isPublic } = req.body;
-  const { title, content,tags } = req.body;
-  if (!title || !content ) {
+  const { title, content, tags, date, isToday = false } = req.body;
+  if (!title || !content) {
     return res.status(400).json({
       code: 1,
-      message: "标题、内容和为必填项",
+      message: "标题、内容为必填项",
     });
   }
+
+
+  let selectedDate: dayjs.Dayjs;
+  // 如果是补签
+  if (isToday) {
+    selectedDate = dayjs()
+   console.log(selectedDate);
+   
+  }else{
+     // 确保 date 存在
+     if (!date) {
+      return res.status(400).json({
+        code: 1,
+        message: "日期不能为空",
+      });
+    }
+    // 解析时间戳
+    if (typeof date === "string" || typeof date === "number") {
+      const timestamp = Number(date); // 转换为数字
+      if (isNaN(timestamp)) {
+        return res.status(400).json({
+          code: 1,
+          message: "无效的时间戳",
+        });
+      }
+       selectedDate = dayjs(timestamp); // 转换为本地时间（中国 UTC+8）
+      console.log(selectedDate.format("YYYY-MM-DD HH:mm:ss")); // 2025-01-19 08:00:00
+      
+    } else {
+      return res.status(400).json({
+        code: 1,
+        message: "无效的日期参数",
+      });
+    }
+
+    // 检查日期是否有效
+    if (!selectedDate.isValid()) {
+      return res.status(400).json({
+        code: 1,
+        message: "无效的日期格式",
+      });
+    }
+    
+  }
+
+  // 计算当天的时间范围
+  const startOfDay = selectedDate.startOf("day").toDate(); // 当天 00:00:00
+  const endOfDay = selectedDate.endOf("day").toDate(); // 当天 23:59:59
+ 
+
+  const existingDiary = await Diary.findOne({
+    createdAt: { $gte: startOfDay, $lte: endOfDay },
+  });
+
+  if (existingDiary) {
+    return res.status(400).json({
+      code: 1,
+      message: "当天已发布日记，无法重复发布",
+    });
+  }
+
   const tagIds: mongoose.Types.ObjectId[] = [];
   if (tags && tags.length > 0) {
     // 遍历 tags 数组，检查并存储标签
@@ -37,25 +100,28 @@ export const AddDiary = async (req: AuthenticatedRequest, res: Response) => {
     }
   }
   // 获取摘要
-  const summary =content.length >3?content.slice(0,3):content.slice(0,content.length)
+  const summary =
+    content.length > 3 ? content.slice(0, 3) : content.slice(0, content.length);
 
   //获取首图
-  let coverImage 
+  let coverImage;
   for (let i = 0; i < content.length; i++) {
     const item = content[i];
-    if ( item.type === "image") {
-      coverImage = item.props.url
-      break
+    if (item.type === "image") {
+      coverImage = item.props.url;
+      break;
     }
   }
+
   // 创建新日记实例)
   const newDiary = new Diary({
     title,
-    tags:tagIds,
+    tags: tagIds,
     content,
     summary,
     coverImage,
-  
+    isRemedy:!isToday,
+    createdAt:date || dayjs()
     // author: req.auth._id, // 使用当前登录用户的 ID
     // tags: tags || [], // 默认空数组
     // isPublic: isPublic || false, // 默认私密
@@ -71,7 +137,10 @@ export const AddDiary = async (req: AuthenticatedRequest, res: Response) => {
   });
 };
 
-export const GetAllDiaries = async (req: AuthenticatedRequest, res: Response) => {
+export const GetAllDiaries = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   const Diary = db.model("Diary");
 
   // 获取分页参数
@@ -85,9 +154,12 @@ export const GetAllDiaries = async (req: AuthenticatedRequest, res: Response) =>
   const totalDiaries = await Diary.countDocuments();
 
   // 获取分页数据
-  const diaries = await Diary.find({},"title coverImage tags summary createdAt updatedAt")
+  const diaries = await Diary.find(
+    {},
+    "title coverImage tags summary createdAt updatedAt"
+  )
     // .populate("author", "username email") // 关联作者信息
-     .populate("tags", "name color") // 关联作者信息
+    .populate("tags", "name color") // 关联作者信息
     .sort({ createdAt: -1 }) // 按创建时间倒序
     .skip((pageNumber - 1) * pageSize)
     .limit(pageSize)
@@ -109,8 +181,10 @@ export const GetAllDiaries = async (req: AuthenticatedRequest, res: Response) =>
   });
 };
 
-
-export const GetDiaryById = async (req: AuthenticatedRequest, res: Response) => {
+export const GetDiaryById = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   const Diary = db.model("Diary");
 
   // 从请求参数中获取日记 ID
@@ -126,7 +200,7 @@ export const GetDiaryById = async (req: AuthenticatedRequest, res: Response) => 
 
   // 查找日记
   const diary = await Diary.findById(id)
-  .populate("tags","name color")
+    .populate("tags", "name color")
     .select("title content coverImage summary tags createdAt updatedAt") // 限制返回字段
     .lean();
 
@@ -203,12 +277,12 @@ export const UpdateDiary = async (req: AuthenticatedRequest, res: Response) => {
   if (title) diary.title = title;
   if (content) diary.content = content;
   if (tags) diary.tags = tagIds;
-  let coverImage 
+  let coverImage;
   for (let i = 0; i < content.length; i++) {
     const item = content[i];
-    if ( item.type === "image") {
-      coverImage = item.props.url
-      break
+    if (item.type === "image") {
+      coverImage = item.props.url;
+      break;
     }
   }
   if (coverImage) diary.coverImage = coverImage;
@@ -223,21 +297,127 @@ export const UpdateDiary = async (req: AuthenticatedRequest, res: Response) => {
   });
 };
 
-export const GetAllDiaryDates = async (req: AuthenticatedRequest, res: Response) => {
+
+export const GetAllDiaryDates = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   const Diary = db.model("Diary");
 
-  const diaryDates = await Diary.find({}, "createdAt")
+  const diaryDates = await Diary.find({}, "remedyAt createdAt") // 查询 remedyAt 和 createdAt
     .sort({ createdAt: -1 }) // 按创建时间倒序排列
     .lean();
 
-  // 提取日期并去重
+  // 提取补签日期（优先使用 remedyAt，如果没有，则使用 createdAt）
   const uniqueDates = [
-    ...new Set(diaryDates.map(diary => new Date(diary.createdAt).toISOString().split("T")[0]))
+    ...new Set(
+      diaryDates.map((diary) =>
+        dayjs(diary.remedyAt || diary.createdAt) // 确保使用本地时间
+          .format("YYYY-MM-DD") // 转换为正确的年月日格式
+      )
+    ),
   ];
 
   res.status(200).json({
     code: 0,
     message: "获取所有日记日期成功",
     data: uniqueDates,
+  });
+};
+
+export const GetDiariesByDate = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const Diary = db.model("Diary");
+
+  // 获取前端传来的日期参数（时间戳）
+  const { date } = req.query;
+
+  // 确保 date 存在
+  if (!date) {
+    return res.status(400).json({
+      code: 1,
+      message: "日期不能为空",
+    });
+  }
+
+  let selectedDate: dayjs.Dayjs;
+
+  // 解析时间戳
+  if (typeof date === "string" || typeof date === "number") {
+    const timestamp = Number(date); // 转换为数字
+    if (isNaN(timestamp)) {
+      return res.status(400).json({
+        code: 1,
+        message: "无效的时间戳",
+      });
+    }
+    selectedDate = dayjs(timestamp); // 解析为 Day.js 对象
+  } else {
+    return res.status(400).json({
+      code: 1,
+      message: "无效的日期参数",
+    });
+  }
+
+  // 检查日期是否有效
+  if (!selectedDate.isValid()) {
+    return res.status(400).json({
+      code: 1,
+      message: "无效的日期格式",
+    });
+  }
+
+  // 计算当天的时间范围
+  const startOfDay = selectedDate.startOf("day").toDate(); // 当天 00:00:00
+  const endOfDay = selectedDate.endOf("day").toDate(); // 当天 23:59:59
+
+  const  diary = await Diary.findOne(
+        { createdAt: { $gte: startOfDay, $lte: endOfDay } },
+        "title coverImage tags content createdAt updatedAt"
+      )
+        .populate("tags", "name color") // 关联标签
+        .lean();
+    
+ 
+
+  res.status(200).json({
+    code: 0,
+    message: diary ? "获取当天日记成功" : "当天无日记",
+    data: diary || null,
+  });
+};
+
+
+export const GetDiaryTimeline = async (req: AuthenticatedRequest, res: Response) => {
+  const Diary = db.model("Diary");
+
+  // 查询所有日记的 _id、标题和更新时间，并按更新时间倒序排列
+  const diaries = await Diary.find({}, "title createdAt")
+    .sort({ createdAt: -1 }) // 按更新时间降序排列
+    .lean();
+
+  // 按年份归档
+  const timeline: Record<string, { _id: string; title: string; createdAt: string }[]> = {};
+
+  diaries.forEach((diary) => {
+    const year = dayjs(diary.updatedAt).format("YYYY"); // 提取年份
+
+    if (!timeline[year]) {
+      timeline[year] = [];
+    }
+
+    timeline[year].push({
+      _id: (diary._id as string).toString(),
+      title: diary.title,
+      createdAt: diary.createdAt,
+    });
+  });
+
+  res.status(200).json({
+    code: 0,
+    message: "获取日记时间轴成功",
+    data: timeline,
   });
 };

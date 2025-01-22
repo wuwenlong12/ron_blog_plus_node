@@ -101,6 +101,8 @@ const TagSchema = new mongoose.Schema<ITag>({
 
 export interface IDiary {
     _id: mongoose.Types.ObjectId; // 日记唯一ID
+    isRemedy:boolean,
+    remedyAt?:Date;
     title: string; // 日记标题
     content: Array<unknown>; // 日记内容
     tags: mongoose.Types.ObjectId[]; // 新增字段，存储关联的标签 ID
@@ -113,6 +115,8 @@ export interface IDiary {
 }
 
 const DiarySchema = new mongoose.Schema<IDiary>({
+    isRemedy: { type: Boolean, required: true },
+    remedyAt: { type: Date, required: false },
     title: { type: String, required: true }, // 日记标题，必填
     tags: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tag", default: [] }], // 默认空数组
     content: { type: Array, required: true }, // 日记内容，必填

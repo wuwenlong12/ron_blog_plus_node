@@ -71,7 +71,9 @@ app.use(
       '/api/tag',
       '/api/diary',
       '/api/diary/content',
+      '/api/diary/list',
       '/api/diary/date',
+      '/api/diary/timeline',
       /^\/folder\//, // 排除 /artical 目录下所有路由
       /^\/api\/public\//, // 排除 /api/public 目录下所有路由
     ],
