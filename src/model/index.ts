@@ -13,13 +13,12 @@ db.once('open', () => {
 // 用户表接口和 Schema
 export interface IUser {
     _id: mongoose.Types.ObjectId;  // 用户唯一ID
-    account: string;  // 用户账户（唯一）
     username: string;  // 用户名
     password: string;  // 密码
     email: string;  // 用户邮箱（唯一）
-    sex: number;  // 性别（0-未知, 1-男, 2-女）
-    birthday: Date;  // 生日
     phone: number;  // 电话号码
+    wx:string //微信
+    github:string //github地址
     school: string;  // 所属学校
     explain: string;  // 个性签名（默认值：用户很懒没有个性签名）
     imgurl: string;  // 头像地址（默认值：/user/user.png）
@@ -28,13 +27,12 @@ export interface IUser {
 }
 
 const UserSchema = new mongoose.Schema<IUser>({
-    account: { type: String, unique: true, required: true }, 
     username: { type: String, required: true },
     password: { type: String, required: true },
-    email: { type: String, unique: true, required: true },
-    sex: { type: Number, default: 0 },
-    birthday: { type: Date },
+    email: { type: String,required: true },
     phone: { type: Number },
+    wx:{ type: String }, 
+    github:{ type: String, }, 
     school: { type: String },
     explain: { type: String, default: '用户很懒没有个性签名' },
     imgurl: { type: String, default: '/user/user.png' },

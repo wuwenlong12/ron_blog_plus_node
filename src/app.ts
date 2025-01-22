@@ -60,8 +60,11 @@ app.use(
   }).unless({
     // 要排除的 路由
     path: [
-      '/users/register', 
-      '/users/login', 
+      '/api/users/register', 
+      '/api/users/auth', 
+      '/api/users/init', 
+      '/api/users/login', 
+      '/api/users/check', 
       '/api/folder',
       '/api/upload',
       '/api/article',
@@ -80,7 +83,12 @@ app.use(
   })
 );
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:8080", // 允许前端访问
+    credentials: true, // 允许携带 Cookie
+  })
+);
 app.use(logger('dev'));
 app.use(uploader());
 app.use(express.json());

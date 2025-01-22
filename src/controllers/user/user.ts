@@ -1,147 +1,180 @@
-import jwt from 'jsonwebtoken';
-import * as bcrypt from '../../utils/bcrypt';
-import { validateInput } from '../../utils/reg';
-import { generateEncryptedString } from '../../utils/encipher';
-// import db, { IUser } from '../../model';
-import { Request, Response } from 'express';
-import { AuthenticatedRequest } from './type';
+import jwt from "jsonwebtoken";
+import * as bcrypt from "../../utils/bcrypt";
+import { validateInput } from "../../utils/reg";
+import {} from "../../utils/encipher";
+import db from "../../model";
+import { Request, Response } from "express";
+import { AuthenticatedRequest } from "./type";
 
-// const User = db.model('User');
+const User = db.model("User");
 
-// 新建用户
-export const register = async (req: Request, res: Response) => {
-    // const { username, email, password } = req.body;
-    // const flag = validateInput(username, email, password);
+export const init = async (req: Request, res: Response) => {
+  const { username, email, password } = req.body;
 
-    // if (flag.valid) {
-    //     const isReg = await isRegister(email);
-    //     console.log('hhh' + isReg);
+  // 验证输入的有效性
+  const flag = validateInput(username, email, password);
+  if (!flag.valid) {
+    return res.send({
+      code: 1,
+      message: "Error: " + flag.message,
+      data: {},
+    });
+  }
 
-    //     if (!isReg) {
-    //         const EnPassword = bcrypt.encryptin(password);
-    //         const account = generateEncryptedString(email);
-    //         const data = {
-    //             account,
-    //             email,
-    //             username,
-    //             password: EnPassword,
-    //         };
-    //         const user = new User(data);
+  // 检查 User 表是否已经存在数据
+  const userCount = await User.countDocuments();
+  if (userCount > 0) {
+    return res.send({
+      code: 1,
+      message: "Error: 已初始化，不能再次初始化",
+      data: {},
+    });
+  }
 
+  // 加密密码
+  const EnPassword = bcrypt.encryptin(password);
 
-    //         await user.save();
-    //         res.send({
-    //             code: 0,
-    //             message: "Success",
-    //             data: {}
-    //         });
+  // 创建新用户
+  const data = {
+    email,
+    username,
+    password: EnPassword,
+  };
+  const user = new User(data);
 
-    //     } else {
-    //         res.send({
-    //             code: 1,
-    //             message: "Error: 邮箱已注册",
-    //             data: {}
-    //         });
-    //     }
-    // } else {
-    //     res.send({
-    //         code: 1,
-    //         message: "Error: " + flag.message,
-    //         data: {}
-    //     });
-    // }
+  // 保存用户到数据库
+  const saveResult = await user.save();
+
+  // 如果保存成功
+  if (saveResult) {
+    return res.send({
+      code: 0,
+      message: "Success: 初始化成功",
+      data: {},
+    });
+  } else {
+    // 如果保存失败
+    return res.send({
+      code: 1,
+      message: "Error: Failed to create user.",
+      data: {},
+    });
+  }
 };
 
-// 邮箱是否已经注册
-const isRegister = async (email: string) => {
-    // let flag: boolean = false
-    // const wherestr = { email };
-    // const count = await User.countDocuments(wherestr);
-    // flag = count > 0;
-    // return flag;
+// 查询系统是否初始化
+export const checkSystemInitialized = async (req: Request, res: Response) => {
+  const userCount = await User.countDocuments(); // 查询 User 表中的记录数
+
+  if (userCount > 0) {
+    res.send({
+      code: 0,
+      message: "已初始化！", // 如果有数据，表示系统初始化成功
+      data: {
+        initialized: true,
+      },
+    });
+  } else {
+    res.send({
+      code: 1,
+      message: "系统还未初始化，请初始化系统", // 如果没有数据，表示系统未初始化
+      data: {
+        initialized: false,
+      },
+    });
+  }
 };
 
-// 邮箱/用户名是否已经注册
-export const repeat = async (data: string, type: string, res: Response) => {
-    // let isRepeat: boolean = false
-    // const wherestr = { [type]: data };
-    // const result = await User.countDocuments(wherestr);
-    // isRepeat = result > 0;
-    // res.send({
-    //     code: 0,
-    //     message: "Success",
-    //     data: result
-    // });
-    // return { type, isRepeat };
-};
 
-// 用户验证
+
 export const login = async (req: Request, res: Response) => {
-    // const { data, password } = req.body;
-    // if (data && password) {
-    //     const wherestr = { $or: [{ account: data }, { email: data }] };
-    //     const out = { account: 1, imgurl: 1, password: 1, username: 1 };
-    //     const result = await User.find(wherestr, out).exec();
-    //     if (result.length === 0) {
-    //         return res.json({
-    //             code: 1,
-    //             message: "账号不存在，请检查账号输入",
-    //             data: {}
-    //         });
-    //     }
-    //     const validUser = result.find(item => {
-    //         console.log(item);
-    //         return bcrypt.verification(password, item.password);
-    //     });
-    //     if (!validUser) {
-    //         return res.json({
-    //             code: 1,
-    //             message: "密码错误",
-    //             data: {}
-    //         });
-    //     }
-    //     const token = jwt.sign({ username: validUser.account, uid: validUser._id.toString() }, 'wu0427..', { expiresIn: '1d', algorithm: 'HS256' });
-    //     const responseData = {
-    //         id: validUser._id,
-    //         account: validUser.account,
-    //         imgurl: validUser.imgurl,
-    //         username: validUser.username,
-    //         token
-    //     };
-    //     return res.json({
-    //         code: 0,
-    //         message: "Success",
-    //         data: responseData
-    //     });
-    // } else {
-    //     res.send({
-    //         code: 1,
-    //         message: "Error: 账号或密码为空",
-    //         data: {}
-    //     });
-    // }
-};
+    const { email, password } = req.body;
+  
+    if (!email || !password) {
+      return res.status(400).json({ code: 1, message: "邮箱或密码不能为空" });
+    }
+      const user = await User.findOne({ email }).exec();
+      if (!user) {
+        return res.status(401).json({ code: 1, message: "账号不存在，请检查邮箱输入" });
+      }
+  
+      const isValid = bcrypt.verification(password, user.password);
+      if (!isValid) {
+        return res.status(401).json({ code: 1, message: "密码错误" });
+      }
+  
+      // 生成 JWT Token
+      const token = jwt.sign(
+        { username: user.account, uid: user._id.toString() },
+        process.env.JWT_SECRET,
+        { expiresIn: "1d", algorithm: "HS256" }
+      );
+  
+      // 设置 HttpOnly Cookie
+      res.cookie((process.env.COOKIE_NAME) as string, token, {
+        httpOnly: true, // 防止前端 JavaScript 访问，避免 XSS 攻击
+        // secure: process.env.NODE_ENV === "production", // 生产环境下必须 HTTPS 传输
+        sameSite: "lax", // 防止 CSRF 攻击
+        maxAge: 24 * 60 * 60 * 1000, // 1 天
+      });
+  
+      return res.json({
+        code: 0,
+        message: "登录成功",
+        data: {
+          id: user._id,
+          account: user.account,
+          imgurl: user.imgurl,
+          username: user.username,
+        },
+      });
+  };
+  export const auth = async (req: AuthenticatedRequest, res: Response) => {
+    const token = req.cookies.token; // 从 Cookie 获取 token
+    if (!token) {
+      return res.status(200).json({ code: 1, message: "未登录" });
+    }
+  
+    try {
+      const decoded = jwt.verify(token, "wu0427..") as { uid: string };
+  
+      // **查询数据库获取完整的用户信息**
+      const user = await User.findById(decoded.uid).select("-password").exec();
+      if (!user) {
+        return res.status(401).json({ code: 1, message: "用户不存在" });
+      }
+  
+      res.json({
+        code: 0,
+        message: "已登录",
+        data:user, // 返回完整的用户信息
+      });
+    } catch (error) {
+      res.status(401).json({ code: 1, message: "无效 token" });
+    }
+  };
+  
 
 export const userDetial = async (req: AuthenticatedRequest, res: Response) => {
-    // const uid = req.auth?.uid;
-    // const wherestr = { '_id': uid }
-    // const out = { 'password': 0 }
-    // try {
-    //     const result: IUser | null = await User.findOne(wherestr, out).exec()
-    //     if (!result) return
-    //     const fileUrl = `${req.protocol}://${req.get('host')}${result?.imgurl}`; // 构建文件 URL
-    //     result.imgurl = fileUrl
-    //     res.send({
-    //         code: 0,
-    //         message: 'Success',
-    //         data:  result 
-    //     })
-    // } catch (error) {
-    //     console.log(error);
-    //     res.send({
-    //         code: 1,
-    //         message: "Error" + error,
-    //         data: {}
-    //     })
-    // }
-}
+  // const uid = req.auth?.uid;
+  // const wherestr = { '_id': uid }
+  // const out = { 'password': 0 }
+  // try {
+  //     const result: IUser | null = await User.findOne(wherestr, out).exec()
+  //     if (!result) return
+  //     const fileUrl = `${req.protocol}://${req.get('host')}${result?.imgurl}`; // 构建文件 URL
+  //     result.imgurl = fileUrl
+  //     res.send({
+  //         code: 0,
+  //         message: 'Success',
+  //         data:  result
+  //     })
+  // } catch (error) {
+  //     console.log(error);
+  //     res.send({
+  //         code: 1,
+  //         message: "Error" + error,
+  //         data: {}
+  //     })
+  // }
+};
