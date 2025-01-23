@@ -20,7 +20,7 @@ export interface IUser {
     wx:string //微信
     github:string //github地址
     school: string;  // 所属学校
-    explain: string;  // 个性签名（默认值：用户很懒没有个性签名）
+    explain: Array<unknown>;  // 个性签名（默认值：用户很懒没有个性签名）
     imgurl: string;  // 头像地址（默认值：/user/user.png）
     createdAt?: Date;  // 创建时间
     updatedAt?: Date;  // 更新时间
@@ -34,8 +34,8 @@ const UserSchema = new mongoose.Schema<IUser>({
     wx:{ type: String }, 
     github:{ type: String, }, 
     school: { type: String },
-    explain: { type: String, default: '用户很懒没有个性签名' },
-    imgurl: { type: String, default: '/user/user.png' },
+    explain: { type: Array, default: ['用户很懒没有个性签名'] },
+    imgurl: { type: String},
 }, { timestamps: true });  // 自动添加 createdAt 和 updatedAt 字段
 
 // 文件夹表接口和 Schema
@@ -124,12 +124,41 @@ const DiarySchema = new mongoose.Schema<IDiary>({
     // isPublic: { type: Boolean, default: false }, // 是否公开，默认私密
 }, { timestamps: true,minimize: false  }); // 自动生成 createdAt 和 updatedAt 字段
 
+
+// 首页轮播图表接口和 Schema
+export interface ICarousel {
+    _id: mongoose.Types.ObjectId;  // 轮播图唯一ID
+    title: string;  // 轮播图标题
+    subtitle: string;  // 轮播图副标题
+    desc: string;  // 轮播图描述
+    img_url:string
+    buttons: {  // 按钮数组
+        color: string;  // 按钮颜色
+        text: string;  // 按钮文本
+        url: string;  // 按钮跳转链接
+    }[];
+    createdAt?: Date;  // 创建时间
+    updatedAt?: Date;  // 更新时间
+}
+
+const CarouselSchema = new mongoose.Schema<ICarousel>({
+    title: { type: String, required: true },  // 轮播图标题
+    subtitle: { type: String, required: true },  // 轮播图副标题
+    desc: { type: String, required: true },  // 轮播图描述
+    img_url: { type: String},  // 轮播图描述
+    buttons: [{  // 按钮数组
+        color: { type: String, required: true },  // 按钮颜色
+        text: { type: String, required: true },  // 按钮文本
+        url: { type: String, required: true },  // 按钮链接
+    }],
+}, { timestamps: true });  // 自动添加 createdAt 和 updatedAt 字段
 // 创建模型
 const User = db.model<IUser>('User', UserSchema);
 const Folder = db.model<IFolder>('Folder', FolderSchema);
 const Article = db.model<IArticle>('Article', ArticleSchema);
 const Tag = db.model<ITag>('Tag', TagSchema);
 const Diary = db.model<IDiary>('Diary', DiarySchema);
+const Carousel = db.model<ICarousel>('Carousel', CarouselSchema);
 
-export { User, Folder, Article,Tag,Diary };
+export { User, Folder, Article,Tag,Diary,Carousel };
 export default db;

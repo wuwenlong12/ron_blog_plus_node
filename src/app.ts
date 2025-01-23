@@ -13,7 +13,7 @@ import folderRouter from './routes/folder'
 import articleRouter from './routes/article'
 import tagRouter from './routes/tag'
 import diaryRouter from './routes/diary'
-
+import baseRouter from './routes/base'
 
 const app: express.Application = express();
 
@@ -50,13 +50,16 @@ console.log("publicPath"+publicPath);
 app.use('/api/public', express.static(publicPath))
 
 
-
+app.use(cookieParser());
 
 // 解析jwt
 app.use(
   jwt({
     secret: 'wu0427..',
     algorithms: ['HS256'],
+    getToken: (req) => {
+      return req.cookies.token; // 这里从 cookie 获取 token
+    }
   }).unless({
     // 要排除的 路由
     path: [
@@ -93,7 +96,7 @@ app.use(logger('dev'));
 app.use(uploader());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+
 
 
 // app.use('/', indexRouter);
@@ -103,6 +106,7 @@ app.use('/api/folder', folderRouter);
 app.use('/api/article', articleRouter);
 app.use('/api/tag', tagRouter);
 app.use('/api/diary', diaryRouter);
+app.use('/api/base', baseRouter);
 // catch 404 and forward to error handler
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
   next(createError(404));

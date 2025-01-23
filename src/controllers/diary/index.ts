@@ -4,7 +4,6 @@ import db, { Tag } from "../../model";
 import mongoose from "mongoose";
 import dayjs from "dayjs";
 import utc from 'dayjs/plugin/utc';
-import { create } from "node:domain";
 dayjs.extend(utc);
 export const AddDiary = async (req: AuthenticatedRequest, res: Response) => {
   const Diary = db.model("Diary");
