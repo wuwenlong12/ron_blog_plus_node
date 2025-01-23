@@ -85,7 +85,7 @@ app.use(
 
 app.use(
   cors({
-    origin: "http://localhost:8080", // 允许前端访问
+    origin: process.env.CROS_URL, // 允许前端访问
     credentials: true, // 允许携带 Cookie
   })
 );
