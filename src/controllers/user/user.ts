@@ -2,64 +2,61 @@ import jwt from "jsonwebtoken";
 import * as bcrypt from "../../utils/bcrypt";
 import { validateInput } from "../../utils/reg";
 import {} from "../../utils/encipher";
-import db, { IUser } from "../../model";
+import  { IUser, Role, User } from "../../model";
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "./type";
 
-const User = db.model("User");
-//初始化系统
+
+
 export const init = async (req: Request, res: Response) => {
   const { username, email, password } = req.body;
 
-  // 验证输入的有效性
+  // 1. 验证输入
   const flag = validateInput(username, email, password);
   if (!flag.valid) {
-    return res.send({
-      code: 1,
-      message: "Error: " + flag.message,
-      data: {},
-    });
+    return res.send({ code: 1, message: "Error: " + flag.message, data: {} });
   }
 
-  // 检查 User 表是否已经存在数据
+  // 2. 检查是否已初始化
   const userCount = await User.countDocuments();
   if (userCount > 0) {
     return res.send({
       code: 1,
-      message: "Error: 已初始化，不能再次初始化",
+      message: "Error: 系统已初始化，不能重复初始化",
       data: {},
     });
   }
 
-  // 加密密码
-  const EnPassword = bcrypt.encryptin(password);
+  // 3. 创建 `superAdmin` 角色（如果 Role 表为空）
+  let superAdminRole = await Role.findOne({ name: "superAdmin" });
 
-  // 创建新用户
-  const data = {
-    email,
+  if (!superAdminRole) {
+    superAdminRole = new Role({
+      name: "superAdmin",
+      description: "超级管理员，拥有所有权限",
+      permissions: ["ALL"], // 超级管理员拥有所有权限
+    });
+    await superAdminRole.save();
+  }
+
+  // 4. 加密密码（异步处理）
+  const hashedPassword = await bcrypt.encryptin(password);
+
+  // 5. 创建 `superAdmin` 用户
+  const user = new User({
     username,
-    password: EnPassword,
-  };
-  const user = new User(data);
+    email,
+    password: hashedPassword,
+    role: superAdminRole._id, // 绑定 superAdmin 角色
+  });
 
-  // 保存用户到数据库
-  const saveResult = await user.save();
+  await user.save();
 
-  // 如果保存成功
-  if (saveResult) {
-    return res.send({
-      code: 0,
-      message: "Success: 初始化成功",
-      data: {},
-    });
-  } else {
-    // 如果保存失败
-    return res.send({
-      code: 1,
-      message: "Error: Failed to create user.",
-      data: {},
-    });
-  }
+  return res.send({
+    code: 0,
+    message: "Success: 初始化完成，超级管理员账号已创建",
+    data: {},
+  });
 };
 
 // 查询系统是否初始化
@@ -106,7 +103,7 @@ export const login = async (req: Request, res: Response) => {
 
   // 生成 JWT Token
   const token = jwt.sign(
-    { username: user.account, uid: user._id.toString() },
+    { username: user.username, uid: user._id.toString() },
     process.env.JWT_SECRET,
     { expiresIn: "1d", algorithm: "HS256" }
   );
@@ -124,7 +121,6 @@ export const login = async (req: Request, res: Response) => {
     message: "登录成功",
     data: {
       id: user._id,
-      account: user.account,
       imgurl: user.imgurl,
       username: user.username,
     },
@@ -133,25 +129,45 @@ export const login = async (req: Request, res: Response) => {
 
 //检查登陆状态
 export const auth = async (req: AuthenticatedRequest, res: Response) => {
-  const token = req.cookies.token; // 从 Cookie 获取 token
-  if (!token) {
-    return res.status(200).json({ code: 1, message: "未登录" });
-  }
-
-  const decoded = jwt.verify(token, "wu0427..") as { uid: string };
-
-  // **查询数据库获取完整的用户信息**
-  const user = await User.findById(decoded.uid).select("-password").exec();
-  if (!user) {
-    return res.status(401).json({ code: 1, message: "用户不存在" });
-  }
-
-  res.json({
-    code: 0,
-    message: "已登录",
-    data: user, // 返回完整的用户信息
-  });
-};
+    const token = req.cookies.token; // 从 Cookie 获取 token
+    if (!token) {
+        // **未登录时，查询超级管理员信息**
+        const superAdmin = await User.findOne({ role: await Role.findOne({ name: "superAdmin" }).select("_id") })
+          .select("_id username email explain") // 不返回密码
+          .exec();
+    
+        if (!superAdmin) {
+          return res.status(404).json({ code: 2, message: "未找到信息" });
+        }
+    
+        return res.status(200).json({
+          code: 1, // 自定义状态码，表示未登录但返回 superAdmin 数据
+          message: "未登录",
+          data: superAdmin,
+        });
+      }
+    try {
+      const decoded = jwt.verify(token, "wu0427..") as { uid: string };
+  
+      // **查询用户，并联表查询 Role**
+      const user = await User.findById(decoded.uid)
+        .select("-password") // 不返回密码
+        .populate("role", "name description permissions") // 仅获取角色的 `name` `description` `permissions`
+        .exec();
+  
+      if (!user) {
+        return res.status(401).json({ code: 1, message: "用户不存在" });
+      }
+  
+      res.json({
+        code: 0,
+        message: "已登录",
+        data: user, // 包含角色信息
+      });
+    } catch (error) {
+      return res.status(401).json({ code: 1, message: "Token 无效" });
+    }
+  };
 
 export const userDetails = async (req: AuthenticatedRequest, res: Response) => {
   const uid = req.auth?.uid;
@@ -241,5 +257,5 @@ export const updateUserProfile = async (
   // 5. 保存更新后的数据
   await user.save();
 
-  res.json({ code: 0, message: "用户信息更新成功"});
+  res.json({ code: 0, message: "用户信息更新成功" });
 };

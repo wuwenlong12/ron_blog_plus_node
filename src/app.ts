@@ -83,6 +83,10 @@ app.use(
       /^\/folder\//, // 排除 /artical 目录下所有路由
       /^\/api\/public\//, // 排除 /api/public 目录下所有路由
     ],
+    custom: (req) => {
+      // **如果是 GET 请求，则跳过 JWT 认证**
+      return req.method === "GET";
+    }
   })
 );
 

@@ -1,5 +1,5 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import { createCarousel, deleteCarousel, getAllCarousels, updateCarousel } from '../controllers/base';
+import { createCarousel, createProject, deleteCarousel, deleteProject, getAllCarousels, getAllProjects, updateCarousel, updateProject } from '../controllers/base';
 
 const router: Router = express.Router();
 
@@ -36,6 +36,43 @@ router.delete('/carousel', async (req: Request, res: Response, next: NextFunctio
       next(error);
     }
   });
+
+
+
+
+
+  router.get('/project', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await getAllProjects(req, res);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  
+  router.post('/project', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await createProject(req, res);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  router.put('/project', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await updateProject(req, res);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  router.delete('/project', async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        await deleteProject(req, res);
+      } catch (error) {
+        next(error);
+      }
+    });
 
 
 export default router;
