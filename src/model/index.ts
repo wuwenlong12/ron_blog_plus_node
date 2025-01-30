@@ -1,15 +1,4 @@
 import mongoose from "mongoose";
-import "dotenv-flow/config";
-// 创建数据库连接
-// const db = mongoose.createConnection('mongodb://mongo:27017/ronBlog', {});
-const db = mongoose.createConnection(process.env.MONGO_URL as string);
-console.log(process.env.MONGO_URL);
-
-db.on("error", console.error.bind(console, "连接错误:"));
-db.once("open", () => {
-  console.log("链接数据库RonBlog成功！");
-});
-
 // 用户表接口和 Schema
 export interface IUser {
   _id: mongoose.Types.ObjectId; // 用户唯一ID
@@ -17,14 +6,10 @@ export interface IUser {
   username: string; // 用户名
   password: string; // 密码
   email: string; // 用户邮箱（唯一）
-  phone: number; // 电话号码
-  wx: string; //微信
-  github: string; //github地址
-  school: string; // 所属学校
-  explain: Array<unknown>; // 个性签名（默认值：用户很懒没有个性签名）
   imgurl: string; // 头像地址（默认值：/user/user.png）
-  createdAt?: Date; // 创建时间
-  updatedAt?: Date; // 更新时间
+  managedSites: mongoose.Types.ObjectId
+  createdAt: Date; // 创建时间
+  updatedAt: Date; // 更新时间
 }
 
 const UserSchema = new mongoose.Schema<IUser>(
@@ -33,12 +18,8 @@ const UserSchema = new mongoose.Schema<IUser>(
     username: { type: String, required: true },
     password: { type: String, required: true },
     email: { type: String, required: true },
-    phone: { type: Number },
-    wx: { type: String },
-    github: { type: String },
-    school: { type: String },
-    explain: { type: Array, default: ["用户很懒没有个性签名"] },
     imgurl: { type: String },
+    managedSites: { type: mongoose.Schema.Types.ObjectId, ref: 'Site' }, // 关联站点表
   },
   { timestamps: true }
 ); // 自动添加 createdAt 和 updatedAt 字段
@@ -48,8 +29,8 @@ export interface IRole {
   _id: mongoose.Types.ObjectId;
   name: string; // 角色名称（如 admin、editor、author、visitor）
   permissions: string[]; // 角色权限（如 ["CREATE_ARTICLE", "DELETE_USER"]）
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // 角色 Schema
@@ -69,8 +50,8 @@ export interface IFolder {
   createdBy?: mongoose.Types.ObjectId; // 文件夹创建者（用户ID）
   desc?: string;
   order: number; // 文件夹排序字段，较小的值优先展示
-  createdAt?: Date; // 创建时间
-  updatedAt?: Date; // 更新时间
+  createdAt: Date; // 创建时间
+  updatedAt: Date; // 更新时间
 }
 
 const FolderSchema = new mongoose.Schema<IFolder>(
@@ -98,8 +79,8 @@ export interface IArticle {
   }; // 必填，所属文件夹
   tags: mongoose.Types.ObjectId[]; // 新增字段，存储关联的标签 ID
   order: number; // 文章排序字段
-  createdAt?: Date; // 创建时间
-  updatedAt?: Date; // 更新时间
+  createdAt: Date; // 创建时间
+  updatedAt: Date; // 更新时间
 }
 
 const ArticleSchema = new mongoose.Schema<IArticle>(
@@ -120,8 +101,8 @@ export interface ITag {
   _id: mongoose.Types.ObjectId; // 标签唯一ID
   name: string; // 标签名称
   color: string;
-  createdAt?: Date; // 创建时间
-  updatedAt?: Date; // 更新时间
+  createdAt: Date; // 创建时间
+  updatedAt: Date; // 更新时间
 }
 
 const TagSchema = new mongoose.Schema<ITag>(
@@ -143,8 +124,8 @@ export interface IDiary {
   coverImage?: string; // 主图URL
   // author: mongoose.Types.ObjectId; // 日记作者（用户ID）
   // isPublic: boolean; // 是否公开
-  createdAt?: Date; // 创建时间
-  updatedAt?: Date; // 更新时间
+  createdAt: Date; // 创建时间
+  updatedAt: Date; // 更新时间
 }
 
 const DiarySchema = new mongoose.Schema<IDiary>(
@@ -175,8 +156,8 @@ export interface ICarousel {
     text: string; // 按钮文本
     url: string; // 按钮跳转链接
   }[];
-  createdAt?: Date; // 创建时间
-  updatedAt?: Date; // 更新时间
+  createdAt: Date; // 创建时间
+  updatedAt: Date; // 更新时间
 }
 
 const CarouselSchema = new mongoose.Schema<ICarousel>(
@@ -207,8 +188,8 @@ export interface IProject {
   likes: number; // 点赞数
   button_url: string; // 按钮跳转链接
   content: Array<unknown>; // 项目内容
-  createdAt?: Date; // 创建时间
-  updatedAt?: Date; // 更新时间
+  createdAt: Date; // 创建时间
+  updatedAt: Date; // 更新时间
 }
 
 const ProjectSchema = new mongoose.Schema<IProject>(
@@ -222,15 +203,63 @@ const ProjectSchema = new mongoose.Schema<IProject>(
   },
   { timestamps: true }
 ); // 自动添加 createdAt 和 updatedAt 字段。
-// 创建模型
-const User = db.model<IUser>("User", UserSchema);
-const Role = db.model<IRole>("Role", RoleSchema);
-const Folder = db.model<IFolder>("Folder", FolderSchema);
-const Article = db.model<IArticle>("Article", ArticleSchema);
-const Tag = db.model<ITag>("Tag", TagSchema);
-const Diary = db.model<IDiary>("Diary", DiarySchema);
-const Carousel = db.model<ICarousel>("Carousel", CarouselSchema);
-const Project = db.model<IProject>("Project", ProjectSchema);
 
-export { User, Role, Folder, Article, Tag, Diary, Carousel,Project };
-export default db;
+// 定义 About 页面 Schema
+export interface ISite {
+  site_sub_url:string; //网站二级域名
+  site_name:string; //网站名字
+  is_core:boolean; //是否为主站
+  is_pass:boolean; //是否通过审核
+  is_off:false; //是否封停
+  avatar: string; // 头像 URL
+  name: string; // 姓名
+  signatures: string[]; // 关于页面的个性签名数组
+  homepage_signature: [string]; // 首页个性签名
+  tech_stack: string[]; // 技术栈数组
+  wechat?: string; // 微信号（可选）
+  github: string; // GitHub 地址
+  email: string; // 邮箱地址
+  profession: string; // 职业
+  card_signature: string; // Card 名片个性签名
+  card_message: string; // Card 背面留言
+  creator: mongoose.Types.ObjectId; // 创建人（用户ID）
+  managedSubdomains:string; //管理的二级网站
+  createdAt: Date; // 创建时间
+  updatedAt: Date; // 更新时间
+}
+
+// Mongoose Schema 定义
+const SiteSchema = new mongoose.Schema<ISite>(
+  {
+    site_sub_url :{type: String,required: true},
+    site_name:{type: String,required: true},
+    is_core:{type: Boolean,default:false}, //是否为主站
+    is_pass:{type: Boolean,default:false}, //是否通过审核
+    is_off:{type: Boolean,default:false}, //是否封停
+    creator: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // 关联 User 表
+    name: { type: String, required: true }, // 姓名
+    avatar: { type: String, }, // 头像
+    signatures: { type: [String],default:['站长很懒，没有留下什么']}, // 个性签名数组
+    homepage_signature: { type: [String],default:['站长很懒，没有留下什么']}, // 首页个性签名
+    tech_stack: { type: [String],default:['HTML','CSS','JS'] }, // 技术栈数组
+    wechat: { type: String }, // 微信号（可选）
+    github: { type: String }, // GitHub 地址
+    email: { type: String}, // 邮箱地址
+    profession: { type: String}, // 职业
+    card_signature: { type: String, default:'站长很懒，没有设置'}, // Card 名片个性签名
+    card_message: { type: String, default:'站长很懒，没有设置' }, // Card 背面留言
+  },
+  { timestamps: true } // 自动生成 createdAt 和 updatedAt
+);
+// 创建模型
+const User = mongoose.model<IUser>("User", UserSchema);
+const Role = mongoose.model<IRole>("Role", RoleSchema);
+const Folder = mongoose.model<IFolder>("Folder", FolderSchema);
+const Article = mongoose.model<IArticle>("Article", ArticleSchema);
+const Tag = mongoose.model<ITag>("Tag", TagSchema);
+const Diary = mongoose.model<IDiary>("Diary", DiarySchema);
+const Carousel = mongoose.model<ICarousel>("Carousel", CarouselSchema);
+const Project = mongoose.model<IProject>("Project", ProjectSchema);
+const Site = mongoose.model<ISite>("Site", SiteSchema);
+
+export { User, Role, Folder, Article, Tag, Diary, Carousel,Project,Site };

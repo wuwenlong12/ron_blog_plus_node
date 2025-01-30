@@ -14,9 +14,12 @@ import articleRouter from './routes/article'
 import tagRouter from './routes/tag'
 import diaryRouter from './routes/diary'
 import baseRouter from './routes/base'
-
+import { checkSystemInitialized } from './middlewares/subdomainMiddleware';
 const app: express.Application = express();
-
+// import "dotenv/config";
+import { initConfig } from './config';
+//初始化数据库
+initConfig()
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
@@ -44,12 +47,7 @@ app.all('*', (req: express.Request, res: express.Response, next: express.NextFun
   }
 });
 const publicPath = resolve(process.cwd(), "public");
-console.log("publicPath"+publicPath);
-
-
 app.use('/api/public', express.static(publicPath))
-
-
 app.use(cookieParser());
 
 // 解析jwt
@@ -80,6 +78,7 @@ app.use(
       '/api/diary/list',
       '/api/diary/date',
       '/api/diary/timeline',
+      '/api/base/project/like',
       /^\/folder\//, // 排除 /artical 目录下所有路由
       /^\/api\/public\//, // 排除 /api/public 目录下所有路由
     ],
@@ -89,10 +88,23 @@ app.use(
     }
   })
 );
+//  origin: process.env.CROS_URL, // 允许前端访问
+const url = process.env.CROS_PROTOCOL+process.env.CROS_DOMAIN+':'+process.env.CROS_PORT
+console.log('url'+url);
 
+const allowedDomain = new RegExp(`^http(s)?:\\/\\/(.*\\.)?${url.replace(/^https?:\/\//, "")}$`);
 app.use(
   cors({
-    origin: process.env.CROS_URL, // 允许前端访问
+    origin: (origin, callback) => {
+      console.log(origin);
+      
+      if (!origin) return callback(null, true); // 允许无来源的请求（如 Postman）
+      if (allowedDomain.test(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true, // 允许携带 Cookie
   })
 );
@@ -103,6 +115,12 @@ app.use(express.urlencoded({ extended: false }));
 
 
 
+
+
+
+app.use(checkSystemInitialized);
+
+app.use('/api/users', usersRouter);
 // app.use('/', indexRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/upload', uploadRouter);

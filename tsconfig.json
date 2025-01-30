@@ -7,7 +7,7 @@
     "esModuleInterop": true,     // 开启模块互操作性
     "types": ["node", "express"] // 保留对 Node 和 Express 类型的支持
   },
-  "include": ["src/**/*", "types"],
+  "include": ["src/**/*", "types", "env.d.ts"],
   "exclude": ["node_modules"]
 }
 

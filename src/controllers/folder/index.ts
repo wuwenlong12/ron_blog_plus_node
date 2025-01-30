@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "./type";
-import db, { IArticle, IFolder } from "../../model";
+import  { Article, Folder, IArticle, IFolder } from "../../model";
 import mongoose, { FilterQuery } from "mongoose";
 
 // 添加文件夹接口
@@ -9,8 +9,8 @@ export const AddNewFolderOrArticle = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const Folder = db.model<IFolder>("Folder");
-  const Article = db.model<IArticle>("Article");
+  
+
   const { name, parentFolderId, type ,tags} = req.body;
 
   if (!name || name.trim() === "") {
@@ -81,7 +81,7 @@ export const AddNewFolderOrArticle = async (
         { parentFolder: parentFolderId || null },
         { $inc: { order: 1 } }
       );
-      const Tag = db.model("Tag");
+     
       const tagIds: mongoose.Types.ObjectId[] = [];
       if (tags && tags.length > 0) {
         // 遍历 tags 数组，检查并存储标签
@@ -169,7 +169,7 @@ export const GetFoldersOrItemInfo = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const Folder = db.model("Folder");
+
   const { id } = req.query;
  
   //如果有id则查找单个文件夹的信息，带详情
@@ -182,11 +182,10 @@ export const GetFoldersOrItemInfo = async (
     });
   }
 
-  const Article = db.model("Article");
+
   const folders: IFolder[] = await Folder.find().sort({ order: 1 }).exec();
   const articles: IArticle[] = await Article.find().sort({ order: 1 }).exec();
   const treeData = buildTree(folders, articles);
-  console.log(treeData);
 
   res.status(201).json({
     code: 0,
@@ -275,8 +274,8 @@ const buildTree = (folders: IFolder[], articles: IArticle[]): TreeNode[] => {
 
 //删除文件夹
 export const DeleteItem = async (req: AuthenticatedRequest, res: Response) => {
-  const Folder = db.model("Folder");
-  const Article = db.model("Article");
+
+
   const { itemId, type } = req.query;
 
   if (!itemId || !type) {
@@ -339,7 +338,7 @@ export const UpdateFolderName = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const Folder = db.model("Folder");
+
   const { folderId, newName } = req.body;
 
   if (!folderId || !newName || newName.trim() === "") {
@@ -388,17 +387,22 @@ export const UpdateFolderDesc = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const Folder = db.model("Folder");
+
   const { folderId, newDesc } = req.body;
 
 // 查找要更新描述的文件夹
   const folderToUpdate = await Folder.findById(folderId);
-  console.log(folderToUpdate);
+  if (!folderToUpdate) {
+    return res.status(404).json({
+      code: 1,
+      message: "没有找到该文件夹",
+    });
+  }
   
   folderToUpdate.desc = newDesc;
   await folderToUpdate.save();
 
-  res.status(200).json({
+  return res.status(200).json({
     code: 0,
     message: "文件夹描述更新成功",
     folder: folderToUpdate,
@@ -408,8 +412,7 @@ export const UpdateFolderDesc = async (
 
 
 export const UpdateItemOrder = async (req: AuthenticatedRequest, res: Response) => {
-  const Folder = db.model('Folder');
-  const Article = db.model('Article');
+
   const { itemId, type, dropOrder, newParentFolderId } = req.body;
 
   if (!itemId || !type || dropOrder === undefined) {

@@ -2,34 +2,37 @@ import jwt from "jsonwebtoken";
 import * as bcrypt from "../../utils/bcrypt";
 import { validateInput } from "../../utils/reg";
 import {} from "../../utils/encipher";
-import  { IUser, Role, User } from "../../model";
+import { IUser, Role, Site, User } from "../../model";
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "./type";
+import generateVerificationCode from "../../utils/generateVerificationCode";
+import storeVerificationCode from "../../utils/storeVerificationCode";
+import sendVerificationEmail from "../../utils/sendVerificationEmail";
+import redisClient from "../../config/redis";
 
-
-
-export const init = async (req: Request, res: Response) => {
-  const { username, email, password } = req.body;
+export const register = async (req: Request, res: Response) => {
+  const { username, email, password, auth_code } = req.body;
+console.log(username);
 
   // 1. 验证输入
-  const flag = validateInput(username, email, password);
+  const flag = validateInput(username, email, password, auth_code);
   if (!flag.valid) {
-    return res.send({ code: 1, message: "Error: " + flag.message, data: {} });
+    return res.send({ code: 1, message: "Error: " + flag.message });
   }
+  const storedCode = await redisClient.get(`verificationCode:${email}`); // 获取存储的验证码
+
+  if (!storedCode) {
+    return res.status(400).json({ message: "验证码已过期或不存在，请重新请求验证码" });
+  }
+
+  if (!storedCode === auth_code)  return res.status(400).json({ message: "验证码错误，请重新输入" });
 
   // 2. 检查是否已初始化
   const userCount = await User.countDocuments();
-  if (userCount > 0) {
-    return res.send({
-      code: 1,
-      message: "Error: 系统已初始化，不能重复初始化",
-      data: {},
-    });
-  }
-
+  const isSuperAdmin = userCount === 0;
   // 3. 创建 `superAdmin` 角色（如果 Role 表为空）
   let superAdminRole = await Role.findOne({ name: "superAdmin" });
-
+  let userRole = await Role.findOne({ name: "user" });
   if (!superAdminRole) {
     superAdminRole = new Role({
       name: "superAdmin",
@@ -38,7 +41,14 @@ export const init = async (req: Request, res: Response) => {
     });
     await superAdminRole.save();
   }
-
+  if (!userRole) {
+    userRole = new Role({
+      name: "user",
+      description: "普通用户",
+      permissions: [""], // 超级管理员拥有所有权限
+    });
+    await superAdminRole.save();
+  }
   // 4. 加密密码（异步处理）
   const hashedPassword = await bcrypt.encryptin(password);
 
@@ -47,20 +57,55 @@ export const init = async (req: Request, res: Response) => {
     username,
     email,
     password: hashedPassword,
-    role: superAdminRole._id, // 绑定 superAdmin 角色
+    role: isSuperAdmin ? superAdminRole._id : userRole._id, // 绑定 superAdmin 角色
   });
 
   await user.save();
 
   return res.send({
     code: 0,
-    message: "Success: 初始化完成，超级管理员账号已创建",
-    data: {},
+    message: "Success: 注册成功请登陆！",
   });
 };
+export const mailValidation = async (req: Request, res: Response) => {
+  const { email } = req.query; // 获取请求中的邮箱地址
 
+  if (!email) {
+    return res.status(400).json({ code:1, message: "邮箱地址不能为空" });
+  }
+
+  try {
+    const code = generateVerificationCode(); // 生成验证码
+    await storeVerificationCode((email) as string, code); // 存储到 Redis
+    await sendVerificationEmail((email) as string, code); // 发送邮件
+
+    res.status(200).json({code:0, message: "验证码已发送，请检查您的邮箱" });
+  } catch (error) {
+    console.error("❌ 发送验证码失败:", error);
+    res.status(500).json({code:1,  message: "发送验证码失败，请稍后重试" });
+  }
+};
 // 查询系统是否初始化
-export const checkSystemInitialized = async (req: Request, res: Response) => {
+export const checkSystemInitialized = async (req: AuthenticatedRequest, res: Response) => {
+  ///逻辑错误 toodo
+  //分站查询是否注册此站点
+const subdomain = req.subdomain
+//主站
+  // if (subdomain== !null){
+    
+  // }else{
+
+  // }
+  // const Count = await Site.countDocuments({ site_sub_url: getSubdomain() }); // 查询 User 表中的记录数
+  // if (Count > 0) {
+  //   next();
+  // } else {
+  //   res.status(404).json({
+  //     code: 2,
+  //     message: "此站点未开通！",
+  //     data: { initialized: false },
+  //   });
+  // }
   const userCount = await User.countDocuments(); // 查询 User 表中的记录数
 
   if (userCount > 0) {
@@ -129,45 +174,45 @@ export const login = async (req: Request, res: Response) => {
 
 //检查登陆状态
 export const auth = async (req: AuthenticatedRequest, res: Response) => {
-    const token = req.cookies.token; // 从 Cookie 获取 token
-    if (!token) {
-        // **未登录时，查询超级管理员信息**
-        const superAdmin = await User.findOne({ role: await Role.findOne({ name: "superAdmin" }).select("_id") })
-          .select("_id username email explain") // 不返回密码
-          .exec();
-    
-        if (!superAdmin) {
-          return res.status(404).json({ code: 2, message: "未找到信息" });
-        }
-    
-        return res.status(200).json({
-          code: 1, // 自定义状态码，表示未登录但返回 superAdmin 数据
-          message: "未登录",
-          data: superAdmin,
-        });
-      }
-    try {
-      const decoded = jwt.verify(token, "wu0427..") as { uid: string };
-  
-      // **查询用户，并联表查询 Role**
-      const user = await User.findById(decoded.uid)
-        .select("-password") // 不返回密码
-        .populate("role", "name description permissions") // 仅获取角色的 `name` `description` `permissions`
-        .exec();
-  
-      if (!user) {
-        return res.status(401).json({ code: 1, message: "用户不存在" });
-      }
-  
-      res.json({
-        code: 0,
-        message: "已登录",
-        data: user, // 包含角色信息
-      });
-    } catch (error) {
-      return res.status(401).json({ code: 1, message: "Token 无效" });
-    }
-  };
+  console.log("Hostname:", req.hostname); // 可能获取不到子域名
+  const token = req.cookies.token; // 从 Cookie 获取 token
+  if (!token) {
+    // **未登录时，查询超级管理员信息**
+    // const superAdmin = await User.findOne({
+    //   role: await Role.findOne({ name: "superAdmin" }).select("_id"),
+    // })
+    //   .select("_id username email explain") // 不返回密码
+    //   .exec();
+
+    // if (!superAdmin) {
+    //   return res.status(404).json({ code: 2, message: "未找到信息" });
+    // }
+
+    return res.status(200).json({
+      code: 1, // 自定义状态码，表示未登录但返回 superAdmin 数据
+      message: "未登录",
+    });
+  }
+
+  const decoded = jwt.verify(token, "wu0427..") as { uid: string };
+
+  // **查询用户，并联表查询 Role**
+  const user = await User.findById(decoded.uid)
+    .select("-password") // 不返回密码
+    .populate("role", "name description permissions") // 仅获取角色的 `name` `description` `permissions`
+    .populate("managedSites","site_sub_url")
+    .exec();
+
+  if (!user) {
+    return res.status(401).json({ code: 1, message: "用户不存在" });
+  }
+
+  res.json({
+    code: 0,
+    message: "已登录",
+    data: user, // 包含角色信息
+  });
+};
 
 export const userDetails = async (req: AuthenticatedRequest, res: Response) => {
   const uid = req.auth?.uid;
@@ -205,17 +250,7 @@ export const updateUserProfile = async (
   }
 
   // 获取用户提交的更新数据
-  const {
-    username,
-    email,
-    oldPassword,
-    newPassword,
-    github,
-    wx,
-    school,
-    explain,
-    imgurl,
-  } = req.body;
+  const { username, email, oldPassword, newPassword, imgurl } = req.body;
 
   // 1. 查找用户
   const user = await User.findById(uid);
@@ -248,11 +283,7 @@ export const updateUserProfile = async (
 
   // 4. 处理其他字段（如果传入则更新，否则保持原值）
   if (username) user.username = username;
-  if (github) user.github = github;
-  if (wx) user.wx = wx;
-  if (school) user.school = school;
   if (imgurl) user.imgurl = imgurl;
-  if (Array.isArray(explain) && explain.length > 0) user.explain = explain;
 
   // 5. 保存更新后的数据
   await user.save();

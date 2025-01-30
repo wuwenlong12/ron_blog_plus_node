@@ -1,5 +1,6 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import {  auth, checkSystemInitialized, init, login, updateUserProfile, userDetails } from '../controllers/user/user';
+import {  auth, checkSystemInitialized, login, mailValidation, register, updateUserProfile, userDetails } from '../controllers/user/user';
+
 
 const router: Router = express.Router();
 
@@ -13,9 +14,9 @@ router.get('/check', async (req: Request, res: Response, next: NextFunction) => 
 });
 
 
-router.post('/init', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await init(req, res);
+    await register(req, res);
   } catch (error) {
     next(error);
   }
@@ -55,5 +56,13 @@ router.patch("/details", async (req: Request, res: Response, next: NextFunction)
   }
 });
 
+
+router.get("/email", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await mailValidation(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
 
 export default router;

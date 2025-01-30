@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "./type";
-import db from "../../model";
+import { Tag } from "../../model";
 
 export const AddNewTag = async (req: AuthenticatedRequest, res: Response) => {
   const { name } = req.body;
@@ -9,7 +9,7 @@ export const AddNewTag = async (req: AuthenticatedRequest, res: Response) => {
     return res.status(400).json({ code:1,message: "标签名称不能为空" });
   }
 
-  const Tag = db.model("Tag");
+ 
   const existingTag = await Tag.findOne({ name });
 
   if (existingTag) {
@@ -27,7 +27,7 @@ export const AddNewTag = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 export const GetAllTags = async (req: AuthenticatedRequest, res: Response) => {
-  const Tag = db.model("Tag");
+ 
   const tags = await Tag.find();
 
   return res.status(200).json({
@@ -41,7 +41,7 @@ export const DeleteTag = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.query;
   console.log(id);
   
-  const Tag = db.model("Tag");
+ 
   const deletedTag = await Tag.findByIdAndDelete(id);
 
   if (!deletedTag) {

@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "./type";
-import db, { IArticle } from "../../model";
+import  { Article, IArticle } from "../../model";
 
 
 export const GetArticleInfo = async (
@@ -10,7 +10,7 @@ export const GetArticleInfo = async (
   const { id } = req.query;
 //
   // 查找单个文章的信息
-  const Article = db.model("Article");
+ 
   if (id) {
     const data = await Article.findById(id)
       .populate("tags", "name color")
@@ -30,7 +30,7 @@ export const UpdateArticleContent = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const Article = db.model("Article");
+ 
   const { id, content } = req.body;
 
   if (!id || !content) {
@@ -63,7 +63,7 @@ export const GetAllArticlesInfo = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const Article = db.model("Article");
+ 
 
   // 获取所有文章的标题和更新时间，按更新时间降序排序
   const articles = await Article.find({}, "title updatedAt")
@@ -96,7 +96,7 @@ export const GetPaginatedArticles = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const Article = db.model("Article");
+ 
 
   // 获取分页参数
   const pageNumber = parseInt(req.query.pageNumber as string) || 1;

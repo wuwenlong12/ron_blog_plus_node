@@ -1,12 +1,12 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "./type";
-import db, { Tag } from "../../model";
+import { Diary, Tag } from "../../model";
 import mongoose from "mongoose";
 import dayjs from "dayjs";
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 export const AddDiary = async (req: AuthenticatedRequest, res: Response) => {
-  const Diary = db.model("Diary");
+  
 
   // 从请求体中获取字段
   // const { title, content, coverImage, tags, isPublic } = req.body;
@@ -140,7 +140,7 @@ export const GetAllDiaries = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const Diary = db.model("Diary");
+  
 
   // 获取分页参数
   const pageNumber = parseInt(req.query.pageNumber as string) || 1;
@@ -184,7 +184,7 @@ export const GetDiaryById = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const Diary = db.model("Diary");
+  
 
   // 从请求参数中获取日记 ID
   const { id } = req.query;
@@ -220,7 +220,7 @@ export const GetDiaryById = async (
 };
 
 export const UpdateDiary = async (req: AuthenticatedRequest, res: Response) => {
-  const Diary = db.model("Diary");
+  
 
   // 从请求体中获取字段
   const { id, title, content, tags } = req.body;
@@ -301,7 +301,7 @@ export const GetAllDiaryDates = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const Diary = db.model("Diary");
+  
 
   const diaryDates = await Diary.find({}, "remedyAt createdAt") // 查询 remedyAt 和 createdAt
     .sort({ createdAt: -1 }) // 按创建时间倒序排列
@@ -328,7 +328,7 @@ export const GetDiariesByDate = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const Diary = db.model("Diary");
+  
 
   // 获取前端传来的日期参数（时间戳）
   const { date } = req.query;
@@ -390,8 +390,7 @@ export const GetDiariesByDate = async (
 
 
 export const GetDiaryTimeline = async (req: AuthenticatedRequest, res: Response) => {
-  const Diary = db.model("Diary");
-
+  
   // 查询所有日记的 _id、标题和更新时间，并按更新时间倒序排列
   const diaries = await Diary.find({}, "title createdAt")
     .sort({ createdAt: -1 }) // 按更新时间降序排列
@@ -408,7 +407,7 @@ export const GetDiaryTimeline = async (req: AuthenticatedRequest, res: Response)
     }
 
     timeline[year].push({
-      _id: (diary._id as string).toString(),
+      _id: (diary._id).toString(),
       title: diary.title,
       createdAt: diary.createdAt,
     });
@@ -420,3 +419,4 @@ export const GetDiaryTimeline = async (req: AuthenticatedRequest, res: Response)
     data: timeline,
   });
 };
+

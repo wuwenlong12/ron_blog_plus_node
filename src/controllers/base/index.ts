@@ -1,10 +1,8 @@
-import db from "../../model";
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "./type";
+import { Carousel, Project } from "../../model";
 
 
-const Carousel = db.model("Carousel");
-const Project = db.model("Project");
 export const createCarousel = async (req: AuthenticatedRequest, res: Response) => {
   const { title, subtitle, desc, buttons,img_url } = req.body;
 
@@ -125,4 +123,23 @@ export const updateProject = async (req: AuthenticatedRequest, res: Response) =>
 export const getAllProjects = async (req: Request, res: Response) => {
   const projects = await Project.find().sort({ createdAt: -1 }); // 按创建时间倒序排列
   res.json({ code: 0, message: "查询成功", data: projects });
+};
+
+//点赞
+export const likeProject = async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.body; // 获取项目 ID
+
+  // 1. 查找项目
+  const project = await Project.findById(id);
+  if (!project) {
+    return res.status(404).json({ code: 1, message: "项目不存在" });
+  }
+
+  // 2. 更新点赞数
+  project.likes += 1; // 点赞数 +1
+
+  // 3. 保存更新后的数据
+  await project.save();
+
+  res.json({ code: 0, message: "点赞成功", likes: project.likes });
 };
