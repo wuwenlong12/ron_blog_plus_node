@@ -126,9 +126,12 @@ export const login = async (req: AuthenticatedRequest, res: Response) => {
   }
 
   const user = await User.findOne({ email }).exec();
-  if (user?.managedSites.toString() !== subdomain_id?.toString()) {
-    return res.status(400).json({ code: 1, message: "请到自己的站点登录" });
+  if (subdomain_id) {
+    if (user?.managedSites.toString() !== subdomain_id?.toString()) {
+      return res.status(400).json({ code: 1, message: "请到自己的站点登录" });
+    }
   }
+
   if (!user) {
     return res
       .status(400)
