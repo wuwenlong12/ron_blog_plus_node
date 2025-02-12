@@ -1,5 +1,5 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import { checkSubdomain, initSite, getSiteInfo, updateSiteInfo, getAllSites, getPageView, getSystemStats, searchSites } from '../controllers/site';
+import { checkSubdomain, initSite, getSiteInfo, updateSiteInfo, getAllSites, getSystemStats } from '../controllers/site';
 import { recordVisit, getVisitStats, getRealTimeVisits } from '../controllers/site/visit';
 
 const router: Router = express.Router();
@@ -87,12 +87,12 @@ router.get('/visit/realtime', async (req: Request, res: Response, next: NextFunc
 });
 
 // 查找站点列表
-router.get('/search', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        await searchSites(req, res);
-    } catch (error) {
-        next(error);
-    }
-});
+// router.get('/search', async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//         await searchSites(req, res);
+//     } catch (error) {
+//         next(error);
+//     }
+// });
 
 export default router;
