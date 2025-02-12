@@ -8,6 +8,12 @@ export const recordVisit = async (req: AuthenticatedRequest, res: Response) => {
   const subdomain_id = req.subdomain_id;
   const { path } = req.body;
   
+  if(!subdomain_id) {
+    return res.status(200).json({
+      code: 1,
+      message: "非主要站点"
+    });
+  }
   // 获取客户端IP，处理本地开发环境的情况
   const ip = req.ip === '::1' ? '127.0.0.1' : req.ip;
   
