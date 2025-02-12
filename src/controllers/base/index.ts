@@ -1,18 +1,31 @@
 import { Request, Response } from "express";
-import { AuthenticatedRequest } from "./type";
-import { Carousel, Project } from "../../model";
+import { AuthenticatedRequest } from "../type";
+import { Carousel, Project, Site, User } from "../../model";
 
-
-export const createCarousel = async (req: AuthenticatedRequest, res: Response) => {
-  const { title, subtitle, desc, buttons,img_url } = req.body;
+// 创建轮播图
+export const createCarousel = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { title, subtitle, desc, buttons, img_url } = req.body;
+  const uid = req.auth?.uid;
+  const user = await User.findById(uid);
 
   // 1. 校验必填字段
-  if (!title || !subtitle || !desc ) {
+  if (!title || !subtitle || !desc) {
     return res.status(400).json({ code: 1, message: "请提供完整的轮播图信息" });
   }
 
   // 2. 创建轮播图
-  const newCarousel = new Carousel({ title, subtitle, desc, buttons,img_url });
+  const newCarousel = new Carousel({
+    title,
+    subtitle,
+    desc,
+    buttons,
+    img_url,
+    creator: uid,
+    site: user?.managedSites,
+  });
 
   // 3. 保存数据
   await newCarousel.save();
@@ -20,9 +33,17 @@ export const createCarousel = async (req: AuthenticatedRequest, res: Response) =
   res.json({ code: 0, message: "轮播图创建成功", carouselId: newCarousel._id });
 };
 
-export const deleteCarousel = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteCarousel = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   const { id } = req.query;
-console.log(id);
+  const uid = req.auth?.uid;
+
+  const carousel = await Carousel.findById(id);
+  if (carousel?.creator.toString() !== uid) {
+    return res.status(403).json({ code: 1, message: "您没有权限删除此轮播图" });
+  }
 
   // 1. 查找并删除轮播图
   const deletedCarousel = await Carousel.findByIdAndDelete(id);
@@ -33,12 +54,18 @@ console.log(id);
   res.json({ code: 0, message: "轮播图删除成功" });
 };
 
-export const updateCarousel = async (req: AuthenticatedRequest, res: Response) => {
-
-  const { id,title, subtitle, desc, buttons } = req.body;
+export const updateCarousel = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id, title, subtitle, desc, buttons } = req.body;
+  const uid = req.auth?.uid;
 
   // 1. 查找轮播图
   const carousel = await Carousel.findById(id);
+  if (carousel?.creator.toString() !== uid) {
+    return res.status(403).json({ code: 1, message: "您没有权限删除此轮播图" });
+  }
   if (!carousel) {
     return res.status(404).json({ code: 1, message: "轮播图不存在" });
   }
@@ -55,26 +82,36 @@ export const updateCarousel = async (req: AuthenticatedRequest, res: Response) =
   res.json({ code: 0, message: "轮播图更新成功" });
 };
 
-export const getAllCarousels = async (req: Request, res: Response) => {
-  const carousels = await Carousel.find().sort({ createdAt: -1 }); // 按创建时间倒序排列
+export const getAllCarousels = async (req: AuthenticatedRequest, res: Response) => {
+  const subdomain_id = req.subdomain_id;
+  const carousels = await Carousel.find({site:subdomain_id}).sort({ createdAt: -1 }); // 按创建时间倒序排列
   res.json({ code: 0, message: "查询成功", data: carousels });
 };
-
-
 
 // 项目
 
 // 创建项目
-export const createProject = async (req: AuthenticatedRequest, res: Response) => {
+export const createProject = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   const { title, img_url, category, button_url, content } = req.body;
-
+  const uid = req.auth?.uid;
   // 1. 校验必填字段
   if (!title || !category || !button_url || !content) {
     return res.status(400).json({ code: 1, message: "请提供完整的项目信息" });
   }
-
+  const user = await User.findById(uid)
   // 2. 创建项目
-  const newProject = new Project({ title, img_url, category, button_url, content });
+  const newProject = new Project({
+    title,
+    img_url,
+    category,
+    button_url,
+    content,
+    creator:uid,
+    site:user?.managedSites
+  });
 
   // 3. 保存数据
   await newProject.save();
@@ -83,10 +120,18 @@ export const createProject = async (req: AuthenticatedRequest, res: Response) =>
 };
 
 // 删除项目
-export const deleteProject = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteProject = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   const { id } = req.query;
+  const uid = req.auth?.uid;
 
   // 1. 查找并删除项目
+  const project = await Project.findById(id);
+  if (project?.creator.toString() !== uid) {
+    return res.status(403).json({ code: 1, message: "您没有权限删除此项目" });
+  }
   const deletedProject = await Project.findByIdAndDelete(id);
   if (!deletedProject) {
     return res.status(404).json({ code: 1, message: "项目不存在" });
@@ -96,11 +141,19 @@ export const deleteProject = async (req: AuthenticatedRequest, res: Response) =>
 };
 
 // 更新项目
-export const updateProject = async (req: AuthenticatedRequest, res: Response) => {
+export const updateProject = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   const { id, title, img_url, category, likes, button_url, content } = req.body;
+  const uid = req.auth?.uid;
 
+ 
   // 1. 查找项目
   const project = await Project.findById(id);
+  if (project?.creator.toString() !== uid) {
+    return res.status(403).json({ code: 1, message: "您没有权限删除此项目" });
+  }
   if (!project) {
     return res.status(404).json({ code: 1, message: "项目不存在" });
   }
@@ -120,8 +173,9 @@ export const updateProject = async (req: AuthenticatedRequest, res: Response) =>
 };
 
 // 获取所有项目
-export const getAllProjects = async (req: Request, res: Response) => {
-  const projects = await Project.find().sort({ createdAt: -1 }); // 按创建时间倒序排列
+export const getAllProjects = async (req: AuthenticatedRequest, res: Response) => {
+  const subdomain_id = req.subdomain_id;
+  const projects = await Project.find({site:subdomain_id}).sort({ createdAt: -1 }); // 按创建时间倒序排列
   res.json({ code: 0, message: "查询成功", data: projects });
 };
 

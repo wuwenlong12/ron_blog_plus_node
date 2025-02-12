@@ -1,4 +1,6 @@
 import { NextFunction, Request, Response } from "express";
+import { Site } from "../model";
+import { Types } from "mongoose";
 // 查询系统是否初始化
 
 function removeText(input: string, textToRemove: string): string {
@@ -6,7 +8,7 @@ function removeText(input: string, textToRemove: string): string {
     return input.replace(regex, ""); // 替换掉指定的文字
   }
 export const checkSystemInitialized = async (
-  req: Request & { subdomain: string | null },
+  req: Request & { subdomain: string | null,subdomain_id:Types.ObjectId|undefined},
   res: Response,
   next: NextFunction
 ) => {
@@ -20,8 +22,14 @@ export const checkSystemInitialized = async (
   };
 
   const subdomain = getSubdomain()
+
+  const site = await Site.findOne({ site_sub_url: subdomain });
+  if (!site && subdomain !== null ) {
+    return res.status(404).json({ code: 2, message: "站点不存在" });
+  }
   req.subdomain = subdomain
- 
+  req.subdomain_id = site?._id
+
 
    next();
 };

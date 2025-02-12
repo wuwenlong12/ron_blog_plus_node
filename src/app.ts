@@ -14,6 +14,7 @@ import articleRouter from './routes/article'
 import tagRouter from './routes/tag'
 import diaryRouter from './routes/diary'
 import baseRouter from './routes/base'
+import siteRouter from './routes/site'
 import { checkSystemInitialized } from './middlewares/subdomainMiddleware';
 const app: express.Application = express();
 // import "dotenv/config";
@@ -50,42 +51,40 @@ const publicPath = resolve(process.cwd(), "public");
 app.use('/api/public', express.static(publicPath))
 app.use(cookieParser());
 
-// 解析jwt
+const privateGetRoutes = ["/api/site/visit/stats"];
+const publicPostRoutes = ["/api/site/visit"];
+
 app.use(
   jwt({
-    secret: 'wu0427..',
-    algorithms: ['HS256'],
+    secret: "wu0427..",
+    algorithms: ["HS256"],
     getToken: (req) => {
-      return req.cookies.token; // 这里从 cookie 获取 token
-    }
+      return req.cookies.token;
+    },
   }).unless({
-    // 要排除的 路由
     path: [
-      '/api/users/register', 
-      '/api/users/auth', 
-      '/api/users/init', 
-      '/api/users/login', 
-      '/api/users/check', 
-      '/api/folder',
-      '/api/upload',
-      '/api/article',
-      '/api/article/summary',
-      '/api/article/content',
-      '/api/folder/order',
-      '/api/tag',
-      '/api/diary',
-      '/api/diary/content',
-      '/api/diary/list',
-      '/api/diary/date',
-      '/api/diary/timeline',
-      '/api/base/project/like',
-      /^\/folder\//, // 排除 /artical 目录下所有路由
-      /^\/api\/public\//, // 排除 /api/public 目录下所有路由
+      "/api/users/register",
+      "/api/users/auth",
+      "/api/users/init",
+      "/api/users/login",
+      "/api/users/check",
+      "/api/upload",
+      "/api/base/project/like",
     ],
     custom: (req) => {
-      // **如果是 GET 请求，则跳过 JWT 认证**
+      // **公开的 POST 请求不需要认证**
+      if (req.method === "POST" && publicPostRoutes.includes(req.path)) {
+        return true;
+      }
+
+      // **私有的 GET 请求需要认证**
+      if (req.method === "GET" && privateGetRoutes.includes(req.path)) {
+        return false;
+      }
+
+      // **默认行为：跳过 GET 请求**
       return req.method === "GET";
-    }
+    },
   })
 );
 //  origin: process.env.CROS_URL, // 允许前端访问
@@ -129,6 +128,7 @@ app.use('/api/article', articleRouter);
 app.use('/api/tag', tagRouter);
 app.use('/api/diary', diaryRouter);
 app.use('/api/base', baseRouter);
+app.use('/api/site', siteRouter);
 // catch 404 and forward to error handler
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
   next(createError(404));

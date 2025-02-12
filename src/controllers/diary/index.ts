@@ -1,16 +1,16 @@
 import { Response } from "express";
-import { AuthenticatedRequest } from "./type";
-import { Diary, Tag } from "../../model";
+import { Diary, Tag, User } from "../../model";
 import mongoose from "mongoose";
 import dayjs from "dayjs";
 import utc from 'dayjs/plugin/utc';
+import { AuthenticatedRequest } from "../type";
 dayjs.extend(utc);
 export const AddDiary = async (req: AuthenticatedRequest, res: Response) => {
   
-
-  // 从请求体中获取字段
-  // const { title, content, coverImage, tags, isPublic } = req.body;
   const { title, content, tags, date, isToday = false } = req.body;
+  const uid = req.auth?.uid;
+  const user = await User.findById(uid)
+
   if (!title || !content) {
     return res.status(400).json({
       code: 1,
@@ -82,13 +82,18 @@ export const AddDiary = async (req: AuthenticatedRequest, res: Response) => {
   if (tags && tags.length > 0) {
     // 遍历 tags 数组，检查并存储标签
     for (const tag of tags) {
-      const existingTag = await Tag.findOne({ name: tag.name });
+      const existingTag = await Tag.findOne({ name: tag.name,creator:uid });
 
       if (!existingTag) {
         // 如果标签不存在，创建新的标签
+        console.log(uid);
+        console.log(user?.managedSites);
+        
         const newTag = new Tag({
           name: tag.name,
           color: tag.color,
+          creator:uid,
+          site:user?.managedSites,
         });
         await newTag.save();
         tagIds.push(newTag._id);
@@ -120,10 +125,9 @@ export const AddDiary = async (req: AuthenticatedRequest, res: Response) => {
     summary,
     coverImage,
     isRemedy:!isToday,
+    creator:user?._id,
+    site:user?.managedSites,
     createdAt:date || dayjs()
-    // author: req.auth._id, // 使用当前登录用户的 ID
-    // tags: tags || [], // 默认空数组
-    // isPublic: isPublic || false, // 默认私密
   });
 
   // 保存到数据库
@@ -140,21 +144,21 @@ export const GetAllDiaries = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  
+  const subdomain_id = req.subdomain_id;
+
 
   // 获取分页参数
   const pageNumber = parseInt(req.query.pageNumber as string) || 1;
   const pageSize = parseInt(req.query.pageSize as string) || 10;
 
-  // // 查询条件（示例：仅返回公开日记）
-  // const query = { isPublic: true };
+
 
   // 获取总日记数量
-  const totalDiaries = await Diary.countDocuments();
+  const totalDiaries = await Diary.countDocuments({site:subdomain_id});
 
   // 获取分页数据
   const diaries = await Diary.find(
-    {},
+    {site:subdomain_id},
     "title coverImage tags summary createdAt updatedAt"
   )
     // .populate("author", "username email") // 关联作者信息
@@ -184,7 +188,6 @@ export const GetDiaryById = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  
 
   // 从请求参数中获取日记 ID
   const { id } = req.query;
@@ -220,7 +223,8 @@ export const GetDiaryById = async (
 };
 
 export const UpdateDiary = async (req: AuthenticatedRequest, res: Response) => {
-  
+ const uid = req.auth?.uid;
+
 
   // 从请求体中获取字段
   const { id, title, content, tags } = req.body;
@@ -243,6 +247,12 @@ export const UpdateDiary = async (req: AuthenticatedRequest, res: Response) => {
 
   // 查找要更新的日记
   const diary = await Diary.findById(id);
+  if (diary?.creator.toString() !== uid) {
+    return res.status(403).json({
+      code: 1,
+      message: "您没有权限修改此日记",
+    });
+  }
 
   if (!diary) {
     return res.status(404).json({
@@ -251,17 +261,20 @@ export const UpdateDiary = async (req: AuthenticatedRequest, res: Response) => {
     });
   }
 
+ const user = await User.findById(uid)
   // 如果传入了 tags，则处理标签
   const tagIds: mongoose.Types.ObjectId[] = [];
   if (tags && tags.length > 0) {
     for (const tag of tags) {
-      const existingTag = await Tag.findOne({ name: tag.name });
+      const existingTag = await Tag.findOne({ name: tag.name,creator:uid });
 
       if (!existingTag) {
         // 如果标签不存在，创建新的标签
         const newTag = new Tag({
           name: tag.name,
           color: tag.color,
+          creator:uid,
+          site:user?.managedSites,
         });
         await newTag.save();
         tagIds.push(newTag._id);
@@ -301,9 +314,9 @@ export const GetAllDiaryDates = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  
+  const subdomain_id = req.subdomain_id;
 
-  const diaryDates = await Diary.find({}, "remedyAt createdAt") // 查询 remedyAt 和 createdAt
+  const diaryDates = await Diary.find({site:subdomain_id}, "remedyAt createdAt") // 查询 remedyAt 和 createdAt
     .sort({ createdAt: -1 }) // 按创建时间倒序排列
     .lean();
 
@@ -328,7 +341,7 @@ export const GetDiariesByDate = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  
+  const subdomain_id = req.subdomain_id;
 
   // 获取前端传来的日期参数（时间戳）
   const { date } = req.query;
@@ -373,7 +386,7 @@ export const GetDiariesByDate = async (
   const endOfDay = selectedDate.endOf("day").toDate(); // 当天 23:59:59
 
   const  diary = await Diary.findOne(
-        { createdAt: { $gte: startOfDay, $lte: endOfDay } },
+        { createdAt: { $gte: startOfDay, $lte: endOfDay },site:subdomain_id },
         "title coverImage tags content createdAt updatedAt"
       )
         .populate("tags", "name color") // 关联标签
@@ -390,9 +403,9 @@ export const GetDiariesByDate = async (
 
 
 export const GetDiaryTimeline = async (req: AuthenticatedRequest, res: Response) => {
-  
+  const subdomain_id = req.subdomain_id;
   // 查询所有日记的 _id、标题和更新时间，并按更新时间倒序排列
-  const diaries = await Diary.find({}, "title createdAt")
+  const diaries = await Diary.find({site:subdomain_id}, "title createdAt")
     .sort({ createdAt: -1 }) // 按更新时间降序排列
     .lean();
 

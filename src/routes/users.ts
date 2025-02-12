@@ -1,5 +1,5 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import {  auth, checkSystemInitialized, login, mailValidation, register, updateUserProfile, userDetails } from '../controllers/user/user';
+import {  auth, checkSystemInitialized, login, logout, mailValidation, register, updateUserProfile, userDetails } from '../controllers/user/user';
 
 
 const router: Router = express.Router();
@@ -30,6 +30,13 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
   }
 });
 
+router.get("/logout", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await logout(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
 
 router.get("/auth", async (req: Request, res: Response, next: NextFunction) => {
   try {

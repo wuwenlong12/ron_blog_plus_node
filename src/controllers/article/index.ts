@@ -1,6 +1,6 @@
 import { Response } from "express";
-import { AuthenticatedRequest } from "./type";
 import  { Article, IArticle } from "../../model";
+import { AuthenticatedRequest } from "../type";
 
 
 export const GetArticleInfo = async (
@@ -8,7 +8,6 @@ export const GetArticleInfo = async (
   res: Response
 ) => {
   const { id } = req.query;
-//
   // 查找单个文章的信息
  
   if (id) {
@@ -32,6 +31,8 @@ export const UpdateArticleContent = async (
 ) => {
  
   const { id, content } = req.body;
+  const uid = req.auth?.uid  
+
 
   if (!id || !content) {
     return res.status(400).json({ code: 1, message: "文章 ID 或内容不能为空" });
@@ -40,6 +41,9 @@ export const UpdateArticleContent = async (
   // 查找文章
   const article = await Article.findOne({ _id: id });
 
+  if (article?.creator !== uid) {
+    return res.status(401).json({ code: 1, message: "没有权限更新此文章" });
+  }
   if (!article) {
     return res.status(404).json({ code: 1, message: "文章不存在" });
   }
@@ -63,10 +67,10 @@ export const GetAllArticlesInfo = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
- 
+ const subdomain_id = req.subdomain_id
 
   // 获取所有文章的标题和更新时间，按更新时间降序排序
-  const articles = await Article.find({}, "title updatedAt")
+  const articles = await Article.find({site:subdomain_id}, "title updatedAt")
     .sort({ updatedAt: -1 }) // 按更新时间降序排序
     .lean();
 
@@ -97,20 +101,20 @@ export const GetPaginatedArticles = async (
   res: Response
 ) => {
  
-
+const subdomain_id = req.subdomain_id
   // 获取分页参数
   const pageNumber = parseInt(req.query.pageNumber as string) || 1;
   const limitNumber = parseInt(req.query.limitNumber as string) || 10;
 
   // 查询文章并处理数据
-  const articles: IArticle[] = await Article.find({}, "title summary createdAt updatedAt tags content")
+  const articles: IArticle[] = await Article.find({site:subdomain_id}, "title summary createdAt updatedAt tags content")
     .populate("tags", "name color")
     .sort({ createdAt: -1 })
     .skip((pageNumber - 1) * limitNumber)
     .limit(limitNumber)
     .lean<IArticle[]>();
 
-  const totalArticles = await Article.countDocuments();
+  const totalArticles = await Article.countDocuments({site:subdomain_id});
 
  
 

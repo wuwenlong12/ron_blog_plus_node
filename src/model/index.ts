@@ -50,6 +50,8 @@ export interface IFolder {
   createdBy?: mongoose.Types.ObjectId; // 文件夹创建者（用户ID）
   desc?: string;
   order: number; // 文件夹排序字段，较小的值优先展示
+  site: mongoose.Types.ObjectId; // 文件夹所属站点
+  creator: mongoose.Types.ObjectId; // 创建人（用户ID）
   createdAt: Date; // 创建时间
   updatedAt: Date; // 更新时间
 }
@@ -61,6 +63,8 @@ const FolderSchema = new mongoose.Schema<IFolder>(
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // 创建者用户
     desc: { type: String },
     order: { type: Number, default: 0 }, // 排序字段
+    site: { type: mongoose.Schema.Types.ObjectId, ref: "Site", required: true }, // 文件夹所属站点
+    creator: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // 创建人（用户ID）
   },
   { timestamps: true }
 );
@@ -72,6 +76,7 @@ export interface IArticle {
   content: Array<unknown>; // 文章内容
   summary: Array<unknown>; // 文章内容
   author: mongoose.Types.ObjectId; // 文章作者（用户ID）
+  site: mongoose.Types.ObjectId; // 文章所属站点
   parentFolder: {
     type: mongoose.Schema.Types.ObjectId;
     ref: "Folder";
@@ -79,6 +84,7 @@ export interface IArticle {
   }; // 必填，所属文件夹
   tags: mongoose.Types.ObjectId[]; // 新增字段，存储关联的标签 ID
   order: number; // 文章排序字段
+  creator: mongoose.Types.ObjectId; // 创建人（用户ID）
   createdAt: Date; // 创建时间
   updatedAt: Date; // 更新时间
 }
@@ -90,8 +96,10 @@ const ArticleSchema = new mongoose.Schema<IArticle>(
     summary: { type: Array, required: true },
     author: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // 文章作者（用户ID）
     parentFolder: { type: mongoose.Schema.Types.ObjectId, ref: "Folder" }, // 文章所属文件夹
+    site: { type: mongoose.Schema.Types.ObjectId, ref: "Site", required: true }, // 文章所属站点
     tags: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tag", default: [] }], // 默认空数组
     order: { type: Number, default: 0 }, // 排序字段
+    creator: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // 创建人（用户ID）
   },
   { timestamps: true, minimize: false }
 );
@@ -101,6 +109,8 @@ export interface ITag {
   _id: mongoose.Types.ObjectId; // 标签唯一ID
   name: string; // 标签名称
   color: string;
+  site: mongoose.Types.ObjectId; // 标签所属站点
+  creator: mongoose.Types.ObjectId; // 创建人（用户ID）
   createdAt: Date; // 创建时间
   updatedAt: Date; // 更新时间
 }
@@ -109,6 +119,8 @@ const TagSchema = new mongoose.Schema<ITag>(
   {
     name: { type: String, unique: true, required: true }, // 标签名称（唯一且必填）
     color: { type: String, required: false },
+    site: { type: mongoose.Schema.Types.ObjectId, ref: "Site", required: true }, // 标签所属站点
+    creator: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // 创建人（用户ID）
   },
   { timestamps: true }
 ); // 自动添加 createdAt 和 updatedAt 字段
@@ -122,8 +134,8 @@ export interface IDiary {
   tags: mongoose.Types.ObjectId[]; // 新增字段，存储关联的标签 ID
   summary: Array<unknown>; // 文章内容
   coverImage?: string; // 主图URL
-  // author: mongoose.Types.ObjectId; // 日记作者（用户ID）
-  // isPublic: boolean; // 是否公开
+  site: mongoose.Types.ObjectId; // 日记所属站点
+  creator: mongoose.Types.ObjectId; // 创建人（用户ID）
   createdAt: Date; // 创建时间
   updatedAt: Date; // 更新时间
 }
@@ -137,8 +149,8 @@ const DiarySchema = new mongoose.Schema<IDiary>(
     content: { type: Array, required: true }, // 日记内容，必填
     summary: { type: Array, required: true },
     coverImage: { type: String, required: false }, // 主图URL，必填
-    // author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // 日记作者
-    // isPublic: { type: Boolean, default: false }, // 是否公开，默认私密
+    creator: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // 创建人（用户ID）
+    site: { type: mongoose.Schema.Types.ObjectId, ref: "Site", required: true }, // 日记所属站点
   },
   { timestamps: true, minimize: false }
 ); // 自动生成 createdAt 和 updatedAt 字段
@@ -150,6 +162,8 @@ export interface ICarousel {
   subtitle: string; // 轮播图副标题
   desc: string; // 轮播图描述
   img_url: string;
+  site: mongoose.Types.ObjectId; // 轮播图所属站点
+  creator: mongoose.Types.ObjectId; // 创建人（用户ID）
   buttons: {
     // 按钮数组
     color: string; // 按钮颜色
@@ -166,6 +180,8 @@ const CarouselSchema = new mongoose.Schema<ICarousel>(
     subtitle: { type: String, required: true }, // 轮播图副标题
     desc: { type: String, required: true }, // 轮播图描述
     img_url: { type: String }, // 轮播图描述
+    creator: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // 创建人（用户ID）
+    site: { type: mongoose.Schema.Types.ObjectId, ref: "Site", required: true }, // 轮播图所属站点
     buttons: [
       {
         // 按钮数组
@@ -182,12 +198,14 @@ const CarouselSchema = new mongoose.Schema<ICarousel>(
 // 项目列表接口和 Schema
 export interface IProject {
   _id: mongoose.Types.ObjectId; // 项目唯一ID
+  site: mongoose.Types.ObjectId; // 项目所属站点
   title: string; // 项目标题
   img_url?: string; // 项目封面图片
   category: string; // 项目分类
   likes: number; // 点赞数
   button_url: string; // 按钮跳转链接
   content: Array<unknown>; // 项目内容
+  creator: mongoose.Types.ObjectId; // 创建人（用户ID）
   createdAt: Date; // 创建时间
   updatedAt: Date; // 更新时间
 }
@@ -195,11 +213,13 @@ export interface IProject {
 const ProjectSchema = new mongoose.Schema<IProject>(
   {
     title: { type: String, required: true }, // 项目标题
+    site: { type: mongoose.Schema.Types.ObjectId, ref: "Site", required: true }, // 项目所属站点
     img_url: { type: String }, // 项目封面图片
     category: { type: String, required: true }, // 项目分类
     likes: { type: Number, default: 0 }, // 点赞数，默认为 0
     button_url: { type: String, required: true }, // 按钮跳转链接
     content: { type: Array, required: true }, // 项目内容
+    creator: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // 创建人（用户ID）
   },
   { timestamps: true }
 ); // 自动添加 createdAt 和 updatedAt 字段。
@@ -220,10 +240,12 @@ export interface ISite {
   github: string; // GitHub 地址
   email: string; // 邮箱地址
   profession: string; // 职业
+  pageView: number; // 总页面浏览量
+  todayPageView: number; // 今日页面浏览量
   card_signature: string; // Card 名片个性签名
   card_message: string; // Card 背面留言
   creator: mongoose.Types.ObjectId; // 创建人（用户ID）
-  managedSubdomains:string; //管理的二级网站
+  AboutContent:Array<unknown>; // 关于页面内容
   createdAt: Date; // 创建时间
   updatedAt: Date; // 更新时间
 }
@@ -231,7 +253,7 @@ export interface ISite {
 // Mongoose Schema 定义
 const SiteSchema = new mongoose.Schema<ISite>(
   {
-    site_sub_url :{type: String,required: true},
+    site_sub_url :{type: String,required: true,unique:true},
     site_name:{type: String,required: true},
     is_core:{type: Boolean,default:false}, //是否为主站
     is_pass:{type: Boolean,default:false}, //是否通过审核
@@ -246,11 +268,67 @@ const SiteSchema = new mongoose.Schema<ISite>(
     github: { type: String }, // GitHub 地址
     email: { type: String}, // 邮箱地址
     profession: { type: String}, // 职业
+    pageView: { type: Number, default: 0 }, // 总页面浏览量
+    todayPageView: { type: Number, default: 0 }, // 今日页面浏览量
     card_signature: { type: String, default:'站长很懒，没有设置'}, // Card 名片个性签名
     card_message: { type: String, default:'站长很懒，没有设置' }, // Card 背面留言
+    AboutContent: { type: Array}, // 关于页面内容
   },
-  { timestamps: true } // 自动生成 createdAt 和 updatedAt
+  { timestamps: true, minimize: false } // 自动生成 createdAt 和 updatedAt
 );
+
+// 访问记录表接口
+export interface IVisit {
+  _id: mongoose.Types.ObjectId;
+  site: mongoose.Types.ObjectId;  // 关联的站点
+  ip: string;                     // 访问者IP
+  userAgent: string;              // 浏览器信息
+  path: string;                   // 访问路径
+  referer?: string;              // 来源页面
+  date: Date;                    // 访问日期（年月日）
+  createdAt: Date;               // 具体访问时间
+  updatedAt: Date;
+}
+
+// 访问记录 Schema
+const VisitSchema = new mongoose.Schema<IVisit>(
+  {
+    site: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "Site", 
+      required: true 
+    },
+    ip: { 
+      type: String, 
+      required: true 
+    },
+    userAgent: { 
+      type: String, 
+      required: true 
+    },
+    path: { 
+      type: String, 
+      required: true 
+    },
+    referer: { 
+      type: String 
+    },
+    date: { 
+      type: Date, 
+      required: true,
+      index: true  // 添加索引以优化查询性能
+    }
+  },
+  { 
+    timestamps: true,
+    // 添加复合索引以优化常用查询
+    indexes: [
+      { site: 1, date: -1 },  // 用于按站点和日期查询
+      { site: 1, ip: 1, date: 1 }  // 用于统计独立访客
+    ]
+  }
+);
+
 // 创建模型
 const User = mongoose.model<IUser>("User", UserSchema);
 const Role = mongoose.model<IRole>("Role", RoleSchema);
@@ -261,5 +339,6 @@ const Diary = mongoose.model<IDiary>("Diary", DiarySchema);
 const Carousel = mongoose.model<ICarousel>("Carousel", CarouselSchema);
 const Project = mongoose.model<IProject>("Project", ProjectSchema);
 const Site = mongoose.model<ISite>("Site", SiteSchema);
+const Visit = mongoose.model<IVisit>("Visit", VisitSchema);
 
-export { User, Role, Folder, Article, Tag, Diary, Carousel,Project,Site };
+export { User, Role, Folder, Article, Tag, Diary, Carousel,Project,Site,Visit };
