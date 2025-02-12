@@ -209,8 +209,13 @@ export const auth = async (req: AuthenticatedRequest, res: Response) => {
   }
 
   const site = await Site.findOne({ site_sub_url: req.subdomain });
-  console.log(site?._id.toString());
-  console.log(user.managedSites._id.toString());
+  if (user?.managedSites === null ) {
+    return res.json({
+      code: 0,
+      message: "未绑定站点",
+      data: user, // 包含角色信息
+    });
+  }
   if (site && site._id.toString() === user.managedSites._id.toString()) {
     res.json({
       code: 0,
