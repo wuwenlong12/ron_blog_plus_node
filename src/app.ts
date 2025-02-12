@@ -92,6 +92,8 @@ const url = process.env.CROS_PROTOCOL+process.env.CROS_DOMAIN+':'+process.env.CR
 console.log('url'+url);
 
 const allowedDomain = new RegExp(`^http(s)?:\\/\\/(.*\\.)?${url.replace(/^https?:\/\//, "")}$`);
+console.log(url);
+
 app.use(
   cors({
     origin: (origin, callback) => {
