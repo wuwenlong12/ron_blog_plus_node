@@ -358,50 +358,68 @@ export const UpdateFolderName = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const { folderId, newName } = req.body;
+  const { folderId, newName,type } = req.body;
   const uid = req.auth?.uid;
   const folder = await Folder.findById(folderId)
 
-  if ( folder?.creator.toString() !== uid) {
-    return res.status(403).json({ code: 1, message: "您没有权限修改此文件夹" });
-  } 
-  if (!folderId || !newName || newName.trim() === "") {
-    return res
-      .status(400)
-      .json({ code: 1, message: "文件夹 ID 或新名称不能为空" });
-  }
-
-  // 查找要更新名称的文件夹
-  const folderToUpdate = await Folder.findById(folderId);
-  if (!folderToUpdate) {
-    return res.status(404).json({ code: 1, message: "文件夹不存在" });
-  }
-
-  // 检查新名称是否已经存在（同一父目录下）
-  const existingFolder = await Folder.findOne({
-    name: newName,
-    parentFolder: folderToUpdate.parentFolder,
-  });
-
-  if (existingFolder) {
-    const isCurrentId = existingFolder._id.toString() === folderId;
-    if (!isCurrentId) {
+  if (type === "folder") {
+    if ( folder?.creator.toString() !== uid) {
+      return res.status(403).json({ code: 1, message: "您没有权限修改此文件夹" });
+    } 
+    if (!folderId || !newName || newName.trim() === "") {
       return res
         .status(400)
-        .json({ code: 1, message: "文件夹名称已存在，请选择其他名称" });
+        .json({ code: 1, message: "文件夹 ID 或新名称不能为空" });
     }
+  
+    // 查找要更新名称的文件夹
+    const folderToUpdate = await Folder.findById(folderId);
+    if (!folderToUpdate) {
+      return res.status(404).json({ code: 1, message: "文件夹不存在" });
+    }
+  
+    // 检查新名称是否已经存在（同一父目录下）
+    const existingFolder = await Folder.findOne({
+      name: newName,
+      parentFolder: folderToUpdate.parentFolder,
+    });
+  
+    if (existingFolder) {
+      const isCurrentId = existingFolder._id.toString() === folderId;
+      if (!isCurrentId) {
+        return res
+          .status(400)
+          .json({ code: 1, message: "文件夹名称已存在，请选择其他名称" });
+      }
+    }
+  
+    // 更新文件夹名称
+    folderToUpdate.name = newName;
+    // folderToUpdate.desc = newDesc;
+    await folderToUpdate.save();
+  
+    res.status(200).json({
+      code: 0,
+      message: "文件夹名称更新成功",
+      folder: folderToUpdate,
+    });
+  }else{
+    const articleToUpdate = await Article.findById(folderId)
+    if (!articleToUpdate) {
+      return res.status(404).json({ code: 1, message: "文章不存在" });
+    }
+    if ( articleToUpdate?.creator.toString() !== uid) {
+      return res.status(403).json({ code: 1, message: "您没有权限修改此文件夹" });
+    } 
+    articleToUpdate.title = newName
+    await articleToUpdate.save()
+    res.status(200).json({
+      code: 0,
+      message: "文章名称更新成功",
+      article: articleToUpdate,
+    });
   }
-
-  // 更新文件夹名称
-  folderToUpdate.name = newName;
-  // folderToUpdate.desc = newDesc;
-  await folderToUpdate.save();
-
-  res.status(200).json({
-    code: 0,
-    message: "文件夹名称更新成功",
-    folder: folderToUpdate,
-  });
+ 
 };
 
 // 修改文件夹名称接口

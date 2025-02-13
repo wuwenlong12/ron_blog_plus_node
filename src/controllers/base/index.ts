@@ -58,7 +58,7 @@ export const updateCarousel = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const { id, title, subtitle, desc, buttons } = req.body;
+  const { id, title, subtitle, desc, buttons,img_url } = req.body;
   const uid = req.auth?.uid;
 
   // 1. 查找轮播图
@@ -75,7 +75,7 @@ export const updateCarousel = async (
   if (subtitle) carousel.subtitle = subtitle;
   if (desc) carousel.desc = desc;
   if (Array.isArray(buttons) && buttons.length > 0) carousel.buttons = buttons;
-
+  if (img_url) carousel.img_url = img_url;
   // 3. 保存更新后的数据
   await carousel.save();
 
