@@ -34,25 +34,6 @@ jobs:
       - name: Build the project
         run: pnpm run build # 使用 pnpm 构建 TypeScript 项目
 
-      # 6. 登录到阿里云 Docker Registry
-      - name: Log in to Aliyun Docker Registry
-        env:
-          ALIYUN_PASSWORD: ${{ secrets.ALIYUN_PASSWORD }} # 从 GitHub Secrets 中获取阿里云密码
-        run: docker login --username=aliyun7228868842 --password=${{ secrets.ALIYUN_PASSWORD }} crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com # 使用阿里云账号和密码登录
-
-      # 7. 检查 Dockerfile 是否有变化
-      - name: Check if Dockerfile has changed
-        run: |
-          git diff --exit-code Dockerfile || echo "Dockerfile has changed"
-        id: dockerfile_check
-
-      # 8. 仅在 Dockerfile 有变化时构建并推送镜像 。
-      - name: Build Docker image
-        run: docker build -t crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/ron-blog-node:latest .  
-
-      - name: Push Docker image
-        run: docker push crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/ron-blog-node:latest
-
       # 9. 设置 SSH 密钥
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.5.3
@@ -73,7 +54,7 @@ jobs:
           DEPLOY_DIR: ${{ secrets.DEPLOY_DIR }} # 从 GitHub Secrets 中获取部署目标目录
         run: |
           echo "Uploading project to server..."
-          rsync -avz --exclude=".git" --exclude="node_modules" --exclude="dist" ./ $SERVER_USER@$SERVER_HOST:$DEPLOY_DIR
+          rsync -avz --exclude=".git" --exclude="node_modules" --exclude="dist"  --exclude="public" ./ $SERVER_USER@$SERVER_HOST:$DEPLOY_DIR
 
       # 12. 在服务器上拉取并启动 Docker 镜像。。
       - name: Pull and run Docker container on server
@@ -84,10 +65,6 @@ jobs:
         run: |
           ssh $SERVER_USER@$SERVER_HOST "bash -c '
             cd $DEPLOY_DIR &&
-            # 拉取 Node.js 镜像
-            docker pull crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/ron-blog-node:latest &&
-            # 拉取 Mongo 镜像
-            docker pull crpi-995uocus6og9mdf4.cn-beijing.personal.cr.aliyuncs.com/wuwenlong797/mongo:latest &&
             # 停止并删除之前的容器
             docker-compose down &&
             # 启动新服务
