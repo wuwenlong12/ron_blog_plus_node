@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // 使用 Node.js 环境运行此脚本
 
 
@@ -7,6 +9,9 @@ import app from '../app';
 import debug from 'debug';
 // 导入 Node.js 内置的 http 模块来创建 HTTP 服务器
 import http from 'http';
+import { AddressInfo } from 'net';
+
+const serverDebug = debug('server:server');
 
 // 获取环境变量中的端口号，并存储到 Express 应用中
 // 如果没有设置 PORT 环境变量，则默认使用 3000 端口
@@ -45,7 +50,7 @@ function normalizePort(val: string | number): number | string | boolean {
 }
 
 // 错误事件处理器
-function onError(error: Error & { syscall?: string; code?: string }): void {
+function onError(error: NodeJS.ErrnoException): void {
   if (error.syscall !== 'listen') {
     // 如果错误不是发生在监听阶段，则直接抛出错误
     throw error;
@@ -72,11 +77,11 @@ function onError(error: Error & { syscall?: string; code?: string }): void {
 
 // 监听事件处理器
 function onListening(): void {
-  const addr = server.address(); // 获取服务器地址
+  const addr = server.address() as AddressInfo;
   const bind = typeof addr === 'string'
     ? 'pipe ' + addr // 如果地址是字符串，表示这是一个命名管道
-    : 'port ' + (addr?.port ?? ''); // 否则，这是端口号
+    : 'port ' + addr.port; // 否则，这是端口号
 
   // 使用 debug 模块输出调试信息
-  debug('Listening on ' + bind);
+  serverDebug('Listening on ' + bind);
 }

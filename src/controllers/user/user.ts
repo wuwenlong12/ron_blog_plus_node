@@ -122,13 +122,13 @@ export const login = async (req: AuthenticatedRequest, res: Response) => {
   const { email, password } = req.body;
   const subdomain_id = req?.subdomain_id;
   if (!email || !password) {
-    return res.status(400).json({ code: 1, message: "邮箱或密码不能为空" });
+    return res.status(400).json({ code: 3, message: "邮箱或密码不能为空" });
   }
 
   const user = await User.findOne({ email }).exec();
-  if (subdomain_id) {
+  if (subdomain_id && user?.managedSites) {
     if (user?.managedSites.toString() !== subdomain_id?.toString()) {
-      return res.status(400).json({ code: 1, message: "请到自己的站点登录" });
+      return res.status(400).json({ code: 3, message: "请到自己的站点登录" });
     }
   }
 
@@ -140,7 +140,7 @@ export const login = async (req: AuthenticatedRequest, res: Response) => {
 
   const isValid = bcrypt.verification(password, user.password);
   if (!isValid) {
-    return res.status(400).json({ code: 1, message: "密码错误" });
+    return res.status(400).json({ code: 3, message: "密码错误" });
   }
 
   // 生成 JWT Token
@@ -173,8 +173,8 @@ export const login = async (req: AuthenticatedRequest, res: Response) => {
 export const logout = async (req: AuthenticatedRequest, res: Response) => {
   // 清除存储在浏览器中的 JWT token
   res.clearCookie(process.env.COOKIE_NAME as string, {
-    httpOnly: true,  // 确保只能通过 HTTP 请求访问
-    sameSite: 'lax', // 防止 CSRF 攻击
+    httpOnly: true, // 确保只能通过 HTTP 请求访问
+    sameSite: "lax", // 防止 CSRF 攻击
     // secure: process.env.NODE_ENV === "production", // 如果是生产环境，应该设置为 true，确保 HTTPS 安全传输
     maxAge: 0, // 设置过期时间为 0，等于删除 cookie
   });
@@ -191,7 +191,7 @@ export const auth = async (req: AuthenticatedRequest, res: Response) => {
 
   if (!token) {
     return res.status(200).json({
-      code: 1, // 自定义状态码，表示未登录但返回 superAdmin 数据
+      code: 3, // 自定义状态码，表示未登录但返回 superAdmin 数据
       message: "未登录",
     });
   }
@@ -205,31 +205,44 @@ export const auth = async (req: AuthenticatedRequest, res: Response) => {
     .populate("managedSites", "site_sub_url")
     .exec();
   if (!user) {
-    return res.status(401).json({ code: 1, message: "用户不存在" });
+    res.clearCookie("token");
+    res.status(401).json({
+      code: 3,
+      message: "Token 已失效，请重新登录"
+    });
+    return;
   }
+  //如果用户已经创建站点
+  if (user.managedSites) {
+    const new_user = user.toObject();
+    const site_url =  process.env.CROS_PROTOCOL +
+    new_user.managedSites.site_sub_url +
+    "." +
+    process.env.CROS_DOMAIN +
+    (process.env.CROS_PORT === "80" ? "" : ":" + process.env.CROS_PORT);
+    const site_admin_url =
+      process.env.CROS_PROTOCOL +
+      new_user.managedSites.site_sub_url +
+      "." +
+      process.env.CROS_DOMAIN +
+      (process.env.CROS_PORT === "80" ? "" : ":" + process.env.CROS_PORT) +
+      "/admin";
+    new_user.managedSites.site_url = site_url;
+    new_user.managedSites.site_admin_url = site_admin_url;
 
-  const site = await Site.findOne({ site_sub_url: req.subdomain });
-  console.log(user);
-  
-  if (!user?.managedSites) {
     return res.json({
       code: 0,
-      message: "未绑定站点",
-      data: user, // 包含角色信息
-    });
-  }
-  if (site && site._id.toString() === user.managedSites._id.toString()) {
-    res.json({
-      code: 0,
       message: "已登录",
+      data: new_user, // 包含角色信息
+    });
+  } else {
+    return res.json({
+      code: 1,
+      message: "未初始化站点",
       data: user, // 包含角色信息
     });
-  } else if (site && site._id.toString() !== user.managedSites._id.toString()) {
-    res.json({
-      code: 3,
-      message: "请到自己的站点登录",
-    });
   }
+ 
 };
 
 export const userDetails = async (req: AuthenticatedRequest, res: Response) => {
@@ -309,4 +322,3 @@ export const updateUserProfile = async (
 
   res.json({ code: 0, message: "用户信息更新成功" });
 };
-
