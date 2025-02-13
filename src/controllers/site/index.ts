@@ -26,8 +26,8 @@ export const initSite = async (req: AuthenticatedRequest, res: Response) => {
       code: 0,
       message: "站点创建成功",
       data: {
-        site_url: `${process.env.CROS_PROTOCOL}${subdomain}.${process.env.CROS_DOMAIN}:${process.env.CROS_PORT}`,
-        site_admin_url: `${process.env.CROS_PROTOCOL}${subdomain}.${process.env.CROS_DOMAIN}:${process.env.CROS_PORT}/admin`,
+        site_url: `${process.env.CROS_PROTOCOL}${subdomain}.${process.env.CROS_DOMAIN}${process.env.CROS_PORT === '80' ? "" : ":" + process.env.CROS_PORT}`,
+        site_admin_url: `${process.env.CROS_PROTOCOL}${subdomain}.${process.env.CROS_DOMAIN}${process.env.CROS_PORT === '80' ? "" : ":" + process.env.CROS_PORT}/admin`,
       },
     });
   }
