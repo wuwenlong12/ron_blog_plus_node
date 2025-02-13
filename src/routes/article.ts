@@ -1,5 +1,5 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import { GetAllArticlesInfo, GetArticleInfo, GetPaginatedArticles } from '../controllers/article';
+import { GetAllArticlesInfo, GetArticleInfo, GetPaginatedArticles, UpdateArticleTags } from '../controllers/article';
 import { UpdateArticleContent } from '../controllers/article';
 
 const router: Router = express.Router();
@@ -35,6 +35,13 @@ router.post('/content', async (req: Request, res: Response, next: NextFunction) 
     }
 });
 
+router.post('/tags', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await UpdateArticleTags(req, res);
+    } catch (error) {
+        next(error);
+    }
+});
 
 
 
