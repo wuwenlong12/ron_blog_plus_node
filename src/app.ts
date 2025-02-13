@@ -63,6 +63,7 @@ app.use(
     getToken: (req) => {
       return req.cookies.token;
     },
+  
   }).unless({
     path: [
       "/api/users/register",
@@ -147,10 +148,9 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
 
 // error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err);
 
   // 处理 JWT 认证错误
-  if (err.name === "UnauthorizedError") {
+  if (err.name === "JsonWebTokenError") {
     res.clearCookie("token");
     res.status(401).json({
       code: 401,
