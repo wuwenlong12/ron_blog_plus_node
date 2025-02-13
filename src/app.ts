@@ -91,7 +91,7 @@ app.use(
 const url = process.env.CROS_PROTOCOL+process.env.CROS_DOMAIN+':'+process.env.CROS_PORT
 console.log('url'+url);
 
-const allowedDomain = new RegExp(`^http(s)?:\\/\\/([a-zA-Z0-9-]+\\.)?${process.env.CROS_DOMAIN.replace(/\./g, '\\.')}$`);
+const allowedDomain = new RegExp(`^http(s)?:\\/\\/(.*\\.)?${url.replace(/^https?:\/\//, "")}$`);
 console.log(url);
 
 app.use(

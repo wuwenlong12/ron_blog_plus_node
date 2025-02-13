@@ -41,7 +41,7 @@ export const UpdateArticleContent = async (
   // 查找文章
   const article = await Article.findOne({ _id: id });
 
-  if (article?.creator !== uid) {
+  if (article?.creator.toString() !== uid?.toString()) {
     return res.status(401).json({ code: 1, message: "没有权限更新此文章" });
   }
   if (!article) {
