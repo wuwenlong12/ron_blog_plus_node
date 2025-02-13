@@ -17,7 +17,7 @@ export const register = async (req: Request, res: Response) => {
   // 1. 验证输入
   const flag = validateInput(username, email, password, auth_code);
   if (!flag.valid) {
-    return res.send({ code: 1, message: "Error: " + flag.message });
+    return res.status(400).send({ code: 1, message: "Error: " + flag.message });
   }
   const storedCode = await redisClient.get(`verificationCode:${email}`); // 获取存储的验证码
 
@@ -209,7 +209,9 @@ export const auth = async (req: AuthenticatedRequest, res: Response) => {
   }
 
   const site = await Site.findOne({ site_sub_url: req.subdomain });
-  if (user?.managedSites === null ) {
+  console.log(user);
+  
+  if (!user?.managedSites) {
     return res.json({
       code: 0,
       message: "未绑定站点",
@@ -226,12 +228,6 @@ export const auth = async (req: AuthenticatedRequest, res: Response) => {
     res.json({
       code: 3,
       message: "请到自己的站点登录",
-    });
-  } else {
-    res.json({
-      code: 1,
-      message: "未登录",
-      data: {}, // 包含角色信息
     });
   }
 };
