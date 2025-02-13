@@ -4,7 +4,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - /var/docker/public:/app/public
+      - ./public:./public
     environment:
       - MONGO_URI=mongodb://mongo:27017/ronBlog
       - REDIS_HOST=redis  # 添加 Redis 连接信息
