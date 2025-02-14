@@ -1,12 +1,11 @@
 import createError from "http-errors";
-import express, { ErrorRequestHandler } from "express";
-import path, { resolve } from "path";
+import express from "express";
+import  { resolve } from "path";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
 import cors from "cors";
 import { expressjwt as jwt } from "express-jwt";
 import uploader from "express-fileupload";
-// import indexRouter from './routes/index';
 import usersRouter from "./routes/users";
 import uploadRouter from "./routes/upload";
 import folderRouter from "./routes/folder";
@@ -19,7 +18,6 @@ import { checkSystemInitialized } from "./middlewares/subdomainMiddleware";
 const app: express.Application = express();
 // import "dotenv/config";
 import { initConfig } from "./config";
-import errorHandler from "./middlewares/errorHandler";
 //初始化数据库
 initConfig();
 
