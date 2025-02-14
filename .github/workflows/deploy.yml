@@ -46,7 +46,7 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts  # 获取并添加服务器公钥
 
-      # 11. 上传项目文件到服务器
+      # 11. 上传打包后项目文件到服务器
       - name: Deploy to server
         env:
           SERVER_USER: ${{ secrets.SERVER_USER }} # 从 GitHub Secrets 中获取服务器用户名
