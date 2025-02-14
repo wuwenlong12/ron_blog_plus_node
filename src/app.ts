@@ -147,7 +147,7 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
 });
 
 // error handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
 
   // 处理 JWT 认证错误
   if (err.name === "JsonWebTokenError") {
