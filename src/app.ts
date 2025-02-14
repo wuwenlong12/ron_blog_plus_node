@@ -21,7 +21,7 @@ import { initConfig } from "./config";
 //初始化数据库
 initConfig();
 
-// 设置跨域访问   
+// 设置跨域访问       
 app.all(
   "*",
   (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -50,8 +50,9 @@ app.all(
 const publicPath = resolve(process.cwd(), "public");
 app.use("/api/public", express.static(publicPath));
 app.use(cookieParser());
-
+// 私有的get请求
 const privateGetRoutes = ["/api/site/visit/stats"];
+// 公开的post请求
 const publicPostRoutes = ["/api/site/visit"];
 
 app.use(
