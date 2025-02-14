@@ -21,7 +21,7 @@ import { initConfig } from "./config";
 //初始化数据库
 initConfig();
 
-// 设置跨域访问
+// 设置跨域访问   
 app.all(
   "*",
   (req: express.Request, res: express.Response, next: express.NextFunction) => {
