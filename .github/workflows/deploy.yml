@@ -54,7 +54,7 @@ jobs:
           DEPLOY_DIR: ${{ secrets.DEPLOY_DIR }} # 从 GitHub Secrets 中获取部署目标目录
         run: |
           echo "Uploading dist folder and docker-compose.yml to server..."
-          rsync -avz ./dist/ ./docker-compose.yml $SERVER_USER@$SERVER_HOST:$DEPLOY_DIR
+          rsync -avz ./dist ./docker-compose.yml $SERVER_USER@$SERVER_HOST:$DEPLOY_DIR
 
       # 12. 在服务器上拉取并启动 Docker 镜像。。
       - name: Pull and run Docker container on server
