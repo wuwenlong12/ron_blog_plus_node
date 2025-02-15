@@ -212,6 +212,8 @@ export const auth = async (req: AuthenticatedRequest, res: Response) => {
     });
     return;
   }
+  console.log();
+  
   //如果用户已经创建站点
   if (user.managedSites) {
     const new_user = user.toObject();

@@ -221,7 +221,7 @@ const ProjectSchema = new mongoose.Schema<IProject>(
     content: { type: Array, required: true }, // 项目内容
     creator: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // 创建人（用户ID）
   },
-  { timestamps: true }
+  { timestamps: true, minimize: false }
 ); // 自动添加 createdAt 和 updatedAt 字段。
 
 // 定义 About 页面 Schema
