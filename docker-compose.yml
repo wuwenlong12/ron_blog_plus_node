@@ -22,7 +22,10 @@ services:
       - "27017:27017"
     volumes:
       - ./data/db:/data/db
-
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root  # 设置 root 用户名
+      - MONGO_INITDB_ROOT_PASSWORD=wu0427..  # 设置 root 密码
+    command: mongod --auth  # 启用认证
   redis:
     image: redis:latest
     container_name: ron-blog-redis
