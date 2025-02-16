@@ -6,6 +6,7 @@ const defaultRoles = [
   { name:'user', permissions: [] },
 ];
 
+// 初始化角色
 export const initializeRoles = async () => {
   try {
     // 直接检查是否已有角色数据
