@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import { initializeRoles } from "../init/initRoles";
-import 'dotenv-flow/config';
 
 // 从环境变量读取 MongoDB 连接 URI
 const MONGO_URI =process.env.MONGO_URL;

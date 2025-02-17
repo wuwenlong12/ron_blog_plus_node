@@ -153,7 +153,6 @@ export const login = async (req: AuthenticatedRequest, res: Response) => {
   // 设置 HttpOnly Cookie
   res.cookie(process.env.COOKIE_NAME as string, token, {
     httpOnly: true, // 防止前端 JavaScript 访问，避免 XSS 攻击
-    // secure: process.env.NODE_ENV === "production", // 生产环境下必须 HTTPS 传输
     sameSite: "lax", // 防止 CSRF 攻击
     maxAge: 24 * 60 * 60 * 1000, // 1 天
   });

@@ -13,23 +13,16 @@ export const checkSystemInitialized = async (
   next: NextFunction
 ) => {
   const host = req.hostname; // 获取主机名
-  const hostArray = host.split(".");
-  hostArray.pop();
-  // 假设子域名是主机名的第一个部分
   const getSubdomain = () => {
     if (process.env.CROS_DOMAIN === host) return null
     return removeText(host, '.'+process.env.CROS_DOMAIN);
   };
-
   const subdomain = getSubdomain()
-
   const site = await Site.findOne({ site_sub_url: subdomain });
   if (!site && subdomain !== null ) {
     return res.status(404).json({ code: 2, message: "站点不存在" });
   }
   req.subdomain = subdomain
   req.subdomain_id = site?._id
-
-
    next();
 };

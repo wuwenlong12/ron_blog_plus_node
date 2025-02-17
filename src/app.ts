@@ -1,6 +1,6 @@
 import createError from "http-errors";
 import express from "express";
-import  { resolve } from "path";
+import { resolve } from "path";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
 import cors from "cors";
@@ -15,13 +15,23 @@ import diaryRouter from "./routes/diary";
 import baseRouter from "./routes/base";
 import siteRouter from "./routes/site";
 import { checkSystemInitialized } from "./middlewares/subdomainMiddleware";
+import dotenv from "dotenv-flow";
+
+// 在应用最开始加载环境变量
+if (process.env.NODE_ENV === "development") {
+  dotenv.config({
+    node_env: process.env.NODE_ENV || "development",
+    default_node_env: "development",
+    silent: true, // 不报错，即使找不到 .env 文件
+  });
+}
 const app: express.Application = express();
 // import "dotenv/config";
 import { initConfig } from "./config";
 //初始化数据库
 initConfig();
 
-// 设置跨域访问       
+// 设置跨域访问
 app.all(
   "*",
   (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -62,7 +72,6 @@ app.use(
     getToken: (req) => {
       return req.cookies.token;
     },
-  
   }).unless({
     path: [
       "/api/users/register",
@@ -141,30 +150,38 @@ app.use("/api/diary", diaryRouter);
 app.use("/api/base", baseRouter);
 app.use("/api/site", siteRouter);
 // catch 404 and forward to error handler
-app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-  next(createError(404));
-});
+app.use(
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    next(createError(404));
+  }
+);
 
 // error handler
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use(
+  (
+    err: Error,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    // 处理 JWT 认证错误
+    if (err.name === "JsonWebTokenError") {
+      res.clearCookie("token");
+      res.status(401).json({
+        code: 401,
+        message: "Token 已失效，请重新登录",
+      });
+      return;
+    }
 
-  // 处理 JWT 认证错误
-  if (err.name === "JsonWebTokenError") {
-    res.clearCookie("token");
-    res.status(401).json({
-      code: 401,
-      message: "Token 已失效，请重新登录"
+    // 其他错误
+    const status = err.status || 500;
+    res.status(status).json({
+      code: status,
+      message: err.message || "服务器内部错误",
+      ...(process.env.NODE_ENV === "development" ? { stack: err.stack } : {}),
     });
-    return;
   }
-
-  // 其他错误
-  const status = err.status || 500;
-  res.status(status).json({
-    code: status,
-    message: err.message || "服务器内部错误",
-    ...(process.env.NODE_ENV === 'development' ? { stack: err.stack } : {})
-  });
-});
+);
 
 export default app;
