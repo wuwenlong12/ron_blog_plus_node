@@ -181,3 +181,104 @@ export const GetPaginatedArticles = async (
     },
   });
 };
+
+// 根据标签搜索文章
+export const SearchArticlesByTags = async (req: AuthenticatedRequest, res: Response) => {
+  const subdomain_id = req.subdomain_id;
+  const { tagId } = req.query; // 接收单个标签ID
+  const page = parseInt(req.query.page as string) || 1;
+  const pageSize = parseInt(req.query.pageSize as string) || 10;
+
+  try {
+    // 构建查询条件
+    const query = {
+      site: subdomain_id,
+      ...(tagId && { tags: new mongoose.Types.ObjectId(tagId as string) })
+    };
+
+    // 并行执行查询总数和分页数据
+    const [total, articles] = await Promise.all([
+      Article.countDocuments(query),
+      Article.find(query)
+        .populate('tags', 'name color')
+        .select('title summary tags createdAt updatedAt')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .lean()
+    ]);
+
+    return res.status(200).json({
+      code: 0,
+      data: {
+        list: articles,
+        pagination: {
+          currentPage: page,
+          pageSize,
+          total
+        }
+      },
+      message: "搜索文章成功"
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      code: 1,
+      message: "搜索文章失败",
+      error: error instanceof Error ? error.message : "未知错误"
+    });
+  }
+};
+
+// 根据标题搜索文章
+export const SearchArticlesByTitle = async (req: AuthenticatedRequest, res: Response) => {
+  const subdomain_id = req.subdomain_id;
+  const { keyword } = req.query; // 搜索关键词
+  const page = parseInt(req.query.page as string) || 1;
+  const pageSize = parseInt(req.query.pageSize as string) || 10;
+
+  try {
+    // 构建查询条件
+    const query = {
+      site: subdomain_id,
+      ...(keyword && { 
+        title: { 
+          $regex: keyword as string, 
+          $options: 'i'  // 不区分大小写
+        } 
+      })
+    };
+
+    // 并行执行查询总数和分页数据
+    const [total, articles] = await Promise.all([
+      Article.countDocuments(query),
+      Article.find(query)
+        .populate('tags', 'name color')
+        .select('title summary tags createdAt updatedAt')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .lean()
+    ]);
+
+    return res.status(200).json({
+      code: 0,
+      data: {
+        list: articles,
+        pagination: {
+          currentPage: page,
+          pageSize,
+          total
+        }
+      },
+      message: "搜索文章成功"
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      code: 1,
+      message: "搜索文章失败",
+      error: error instanceof Error ? error.message : "未知错误"
+    });
+  }
+};

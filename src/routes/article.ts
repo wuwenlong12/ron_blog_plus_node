@@ -1,5 +1,5 @@
 import express, { Router, Request, Response, NextFunction } from 'express';
-import { GetAllArticlesInfo, GetArticleInfo, GetPaginatedArticles, UpdateArticleTags } from '../controllers/article';
+import { GetAllArticlesInfo, GetArticleInfo, GetPaginatedArticles, UpdateArticleTags, SearchArticlesByTags, SearchArticlesByTitle } from '../controllers/article';
 import { UpdateArticleContent } from '../controllers/article';
 
 const router: Router = express.Router();
@@ -43,6 +43,20 @@ router.post('/tags', async (req: Request, res: Response, next: NextFunction) => 
     }
 });
 
+router.get('/search/tag', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await SearchArticlesByTags(req, res);
+    } catch (error) {
+        next(error);
+    }
+});
 
+router.get('/search/title', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await SearchArticlesByTitle(req, res);
+    } catch (error) {
+        next(error);
+    }
+});
 
 export default router;
