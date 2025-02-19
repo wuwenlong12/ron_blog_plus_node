@@ -16,7 +16,7 @@ async function runBuild() {
       bundle: true, // 打包所有依赖
       platform: 'node', // 指定为 Node.js 环境
       target: 'node18', // 目标 Node.js 版本
-      minify: true, // 压缩输出的代码
+      // minify: true, // 压缩输出的代码
       sourcemap: false, // 不生成 SourceMap
       define: {
         // 动态传递所有环境变量
