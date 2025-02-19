@@ -98,13 +98,12 @@ app.use(
     },
   })
 );
-//  origin: process.env.CROS_URL, // 允许前端访问
+
 const url =
   process.env.CROS_PROTOCOL +
   process.env.CROS_DOMAIN +
   ":" +
   process.env.CROS_PORT;
-console.log("url" + url);
 
 const allowedDomain =
   process.env.NODE_ENV === "production"
@@ -120,8 +119,6 @@ console.log(url);
 app.use(
   cors({
     origin: (origin, callback) => {
-      console.log(origin);
-
       if (!origin) return callback(null, true); // 允许无来源的请求（如 Postman）
       if (allowedDomain.test(origin)) {
         callback(null, true);

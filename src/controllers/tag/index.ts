@@ -66,7 +66,7 @@ export const DeleteTag = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.query;
   const uid = req.auth?.uid;
   const tag = await Tag.findOne({ _id: id });
-  if (uid !== tag?.creator) {
+  if (uid !== tag?.creator.toString()) {
     return res.status(401).json({ code: 1, message: "没有权限删除此标签" });
   }
   const deletedTag = await Tag.findByIdAndDelete(id);

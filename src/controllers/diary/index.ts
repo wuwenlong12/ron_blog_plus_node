@@ -23,8 +23,6 @@ export const AddDiary = async (req: AuthenticatedRequest, res: Response) => {
   // 如果是补签
   if (isToday) {
     selectedDate = dayjs()
-   console.log(selectedDate);
-   
   }else{
      // 确保 date 存在
      if (!date) {
@@ -43,8 +41,6 @@ export const AddDiary = async (req: AuthenticatedRequest, res: Response) => {
         });
       }
        selectedDate = dayjs(timestamp); // 转换为本地时间（中国 UTC+8）
-      console.log(selectedDate.format("YYYY-MM-DD HH:mm:ss")); // 2025-01-19 08:00:00
-      
     } else {
       return res.status(400).json({
         code: 1,
@@ -86,9 +82,6 @@ export const AddDiary = async (req: AuthenticatedRequest, res: Response) => {
 
       if (!existingTag) {
         // 如果标签不存在，创建新的标签
-        console.log(uid);
-        console.log(user?.managedSites);
-        
         const newTag = new Tag({
           name: tag.name,
           color: tag.color,
