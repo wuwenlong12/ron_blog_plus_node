@@ -329,6 +329,37 @@ const VisitSchema = new mongoose.Schema<IVisit>(
   }
 );
 
+
+// 文件表 Schema
+export interface IFile {
+  _id: mongoose.Types.ObjectId; // 轮播图唯一ID
+  name: string; // 文件名
+  hash: string; // 文件hash
+  size: number; // 文件大小
+  type: string; // 文件类型
+  path: string; // 文件路径
+  is_over:boolean; // 是否完成上传
+  totalChunks:number; // 分片总数
+  chunkIndex:number; // 分片索引
+  createdAt: Date; // 创建时间
+  updatedAt: Date; // 更新时间
+}
+
+const FileSchema = new mongoose.Schema<IFile>(
+  {
+    name: { type: String, required: true }, // 文件名
+    hash: { type: String, required: true }, // 文件hash
+    size: { type: Number, required: true }, // 文件大小
+    type: { type: String, required: true }, // 文件类型
+    path: { type: String }, // 文件路径
+    is_over: { type: Boolean, default: false }, // 是否完成上传
+    totalChunks: { type: Number, default: 0 }, // 分片总数
+    chunkIndex: { type: Number, default: 0 }, // 分片索引
+  },
+  { timestamps: true }
+); 
+
+
 // 创建模型
 const User = mongoose.model<IUser>("User", UserSchema);
 const Role = mongoose.model<IRole>("Role", RoleSchema);
@@ -340,5 +371,5 @@ const Carousel = mongoose.model<ICarousel>("Carousel", CarouselSchema);
 const Project = mongoose.model<IProject>("Project", ProjectSchema);
 const Site = mongoose.model<ISite>("Site", SiteSchema);
 const Visit = mongoose.model<IVisit>("Visit", VisitSchema);
-
-export { User, Role, Folder, Article, Tag, Diary, Carousel,Project,Site,Visit };
+const File = mongoose.model<IFile>("File", FileSchema);
+export { User, Role, Folder, Article, Tag, Diary, Carousel,Project,Site,Visit,File };
