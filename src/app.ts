@@ -15,19 +15,10 @@ import diaryRouter from "./routes/diary";
 import baseRouter from "./routes/base";
 import siteRouter from "./routes/site";
 import { checkSystemInitialized } from "./middlewares/subdomainMiddleware";
-import dotenv from "dotenv-flow";
-
-// 在应用最开始加载环境变量
-if (process.env.NODE_ENV === "development") {
-  dotenv.config({
-    node_env: process.env.NODE_ENV || "development",
-    default_node_env: "development",
-    silent: true, // 不报错，即使找不到 .env 文件
-  });
-}
-const app: express.Application = express();
-// import "dotenv/config";
 import { initConfig } from "./config";
+
+const app: express.Application = express();
+
 //初始化数据库
 initConfig();
 

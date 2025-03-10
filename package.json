@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_ENV=development nodemon -r dotenv/config --watch src --ext ts --exec ts-node --transpile-only ./src/bin/www",
-    "build": "cross-env NODE_ENV=production ts-node -r dotenv/config build.ts",
+  "dev": "cross-env NODE_ENV=development nodemon --watch src --ext ts --exec 'ts-node -r dotenv-flow/config --transpile-only ./src/bin/www.ts'",
+    "build": "cross-env NODE_ENV=production ts-node build.ts",
     "start": "cross-env NODE_ENV=production node ./dist/index.js",
     "lint": "npx eslint .",
     "fix": "npx eslint . --fix"
